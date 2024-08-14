@@ -11,3 +11,20 @@ class IsAllowed(BaseFilter):
             if str(message.chat.id) in i:
                 state = True
         return state
+
+
+class IsRegistered(BaseFilter):
+    async def __call__(self, message: Message = None, callback: CallbackQuery = None) -> bool:
+        state = False
+        for i in select_all_id():
+            if message.chat.id in i:
+                state = True
+        return state
+
+
+class NoData(BaseFilter):
+    async def __call__(self, message: Message = None, callback: CallbackQuery = None) -> bool:
+        state = False
+        if select_data(message.chat.id)[0] is None:
+            state = True
+        return state

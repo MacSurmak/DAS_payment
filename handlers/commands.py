@@ -5,22 +5,40 @@ from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
-from filters.filters import IsAllowed
+from filters.filters import IsRegistered, NoData
 from keyboards.commands_menu import yesno_markup
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='commands-router')
 
 
-@router.message(CommandStart())
-async def process_start_command(message: Message, bot: Bot):
+@router.message(CommandStart(), ~IsRegistered())
+async def process_start_command(message: Message):
     """
     Handles /start command and adds user into database
     :param message: Telegram message
-    :param bot: Bot instance
     """
+    user_id = message.from_user.id
+    insert_id(user_id)
     await message.answer(text=lexicon('/start'))
 
+
+@router.message(CommandStart(), IsRegistered(), NoData())
+async def process_start_command(message: Message):
+    """
+    Handles /start command for registered users
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('/start-registered'))
+
+
+@router.message(CommandStart(), IsRegistered(), ~NoData())
+async def process_start_command(message: Message):
+    """
+    Handles /start command for registered users with data
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('/start-data').format(name=select_data(message.chat.id)[0]))
 
 # @router.message(Command("hate"), IsAllowed())
 # async def process_help_command(message: Message):
