@@ -92,3 +92,36 @@ def update_name(user_id, name, surname, patronymic):
 
     connection.commit()
     connection.close()
+
+
+def update_degree(user_id, degree):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Users SET degree = ? WHERE user_id = ?',
+                   (degree, user_id,))
+
+    connection.commit()
+    connection.close()
+
+
+def update_year(user_id, year):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Users SET year = ? WHERE user_id = ?',
+                   (year, user_id,))
+
+    connection.commit()
+    connection.close()
+
+
+def update_faculty(user_id, faculty):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Users SET faculty = ? WHERE user_id = ?',
+                   (faculty, user_id,))
+
+    connection.commit()
+    connection.close()

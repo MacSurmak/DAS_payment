@@ -7,7 +7,7 @@ from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
 from filters.filters import IsRegistered, NoData
-from keyboards.commands_menu import yesno_markup
+from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='messages-router')
@@ -43,7 +43,7 @@ async def process_adding_data(message: Message):
 
 
 @router.callback_query(lambda callback: callback.data == '_no')
-async def admin_exit(callback: CallbackQuery):
+async def no(callback: CallbackQuery):
     """
     Handles callback with 'no' and returns to waiting for name
     :param callback: Telegram callback
@@ -53,7 +53,7 @@ async def admin_exit(callback: CallbackQuery):
 
 
 @router.callback_query(lambda callback: callback.data == '_yes')
-async def admin_exit(callback: CallbackQuery):
+async def yes(callback: CallbackQuery):
     """
     Handles callback with 'yes' and adds it to database
     :param callback: Telegram callback
@@ -66,5 +66,49 @@ async def admin_exit(callback: CallbackQuery):
                 name=name,
                 surname=surname,
                 patronymic=patronymic)
-    await callback.message.edit_text(text=lexicon('accepted').format(name=name),
+    await callback.message.edit_text(text=lexicon('faculty').format(name=name),
+                                     reply_markup=faculty_markup())
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'faculty')
+async def faculty(callback: CallbackQuery):
+    """
+    Handles callback with 'faculty' and adds it to database
+    :param callback: Telegram callback
+    """
+    update_faculty(user_id=callback.message.chat.id,
+                   faculty=lexicon(key=callback.data.split('_')[1]))
+    await callback.message.edit_text(text=lexicon('accepted'),
+                                     reply_markup=degree_markup())
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'degree')
+async def bachelor(callback: CallbackQuery):
+    """
+    Handles callback with degree and adds it to database
+    :param callback: Telegram callback
+    """
+    degree = lexicon(key=callback.data.split('_')[1])
+    lengths = {
+        'Бакалавриат': 4,
+        'Магистратура': 2,
+        'Специалитет': 6,
+    }
+    update_degree(user_id=callback.message.chat.id,
+                  degree=degree)
+    await callback.message.edit_text(text=lexicon('accepted'),
+                                     reply_markup=year_markup(length=lengths[degree]))
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
+async def year(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    update_year(user_id=callback.message.chat.id,
+                year=callback.data.split('_')[0])
+    await callback.message.edit_text(text=lexicon('ready'),
                                      reply_markup=None)
+
+

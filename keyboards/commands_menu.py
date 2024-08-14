@@ -17,10 +17,36 @@ async def set_commands_menu(bot: Bot):
 
 
 def yesno_markup() -> InlineKeyboardMarkup:
-    buttons = ['_yes', '_no']
+    buttons: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=lexicon(key), callback_data=key) for key in ['_yes', '_no']
+    ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    for button in buttons:
-        kb_builder.row(InlineKeyboardButton(
-            text=lexicon(button),
-            callback_data=button))
-    return kb_builder.as_markup()
+    kb_builder.row(*buttons, width=2)
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
+def degree_markup() -> InlineKeyboardMarkup:
+    buttons: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=lexicon(key), callback_data=f'degree_{key}') for key in ['bachelor', 'master', 'specialist']
+    ]
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    kb_builder.row(*buttons, width=2)
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
+def year_markup(length) -> InlineKeyboardMarkup:
+    buttons: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=f'{i + 1} курс', callback_data=f'{i + 1}_year') for i in range(length)
+    ]
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    kb_builder.row(*buttons, width=2)
+    return kb_builder.as_markup(resize_keyboard=True)
+
+
+def faculty_markup() -> InlineKeyboardMarkup:
+    buttons: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['bio', 'geo',]
+    ]
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    kb_builder.row(*buttons, width=2)
+    return kb_builder.as_markup(resize_keyboard=True)
