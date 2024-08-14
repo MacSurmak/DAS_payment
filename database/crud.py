@@ -36,15 +36,6 @@ def insert_id(user_id):
 #     return results
 #
 #
-# def update(counter, name, surname):
-#     connection = sqlite3.connect('database/bitches.db')
-#     cursor = connection.cursor()
-#
-#     cursor.execute('UPDATE Bitches SET counter = ? WHERE name = ? AND surname = ?',
-#                    (counter, name, surname,))
-#
-#     connection.commit()
-#     connection.close()
 #
 #
 # def delete(name, surname):
@@ -86,8 +77,18 @@ def select_data(user_id):
 
     cursor.execute('SELECT name FROM Users WHERE user_id = ?', (user_id,))
     results = cursor.fetchone()
-    print(results)
 
     connection.close()
 
     return results
+
+
+def update_name(user_id, name, surname, patronymic):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Users SET (name, surname, patronymic) = (?, ?, ?) WHERE user_id = ?',
+                   (name, surname, patronymic, user_id,))
+
+    connection.commit()
+    connection.close()

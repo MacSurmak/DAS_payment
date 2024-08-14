@@ -8,9 +8,13 @@ LEXICON: dict[str, str] = {
 
     # User messages
     'reply-other': 'Я тебя не понимаю :(',
+    'name-confirmation': 'Фамилия: {surname}\nИмя: {name}\nОтчество: {patronymic}\n\nВсё верно?',
+    'repeat': 'Пожалуйста, отправь мне свои ФИО, например, "Иванов Иван Иванович".',
+    'accepted': 'Будем знакомы, {name}!',
 
     # User markups
-    '_keygen': 'Сгенерировать ключ',
+    '_no': 'Нет',
+    '_yes': 'Да'
 }
 
 

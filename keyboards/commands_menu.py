@@ -16,8 +16,8 @@ async def set_commands_menu(bot: Bot):
     await bot.set_my_commands(main_menu_commands)
 
 
-def yesno_markup(name, surname) -> InlineKeyboardMarkup:
-    buttons = [f'yes_{name}_{surname}', 'no']
+def yesno_markup() -> InlineKeyboardMarkup:
+    buttons = ['_yes', '_no']
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     for button in buttons:
         kb_builder.row(InlineKeyboardButton(

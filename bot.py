@@ -4,7 +4,7 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 
 from config_data import config
-from handlers import commands
+from handlers import commands, messages
 from keyboards.commands_menu import set_commands_menu
 from services import setup_logger, update_counter, notify
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
@@ -18,6 +18,7 @@ async def main() -> None:
     dp: Dispatcher = Dispatcher()
 
     dp.include_router(commands.router)
+    dp.include_router(messages.router)
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
     scheduler.start()
