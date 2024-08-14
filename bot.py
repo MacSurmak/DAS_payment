@@ -1,6 +1,7 @@
 import asyncio
 
 from aiogram import Bot, Dispatcher
+from aiogram.client.bot import DefaultBotProperties
 
 from config_data import config
 from handlers import commands
@@ -12,7 +13,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 async def main() -> None:
 
     bot: Bot = Bot(token=config.bot.token,
-                   parse_mode='HTML')
+                   default=DefaultBotProperties(parse_mode='HTML'))
 
     dp: Dispatcher = Dispatcher()
 

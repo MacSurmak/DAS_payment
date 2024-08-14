@@ -1,22 +1,7 @@
 from database.crud import *
 from aiogram import Bot
-from petrovich.main import Petrovich
-from petrovich.enums import Case, Gender
 from keyboards.commands_menu import yesno_markup
 import random
-
-
-def case(name, surname, cs="genitive"):
-    p = Petrovich()
-    if cs == "accusative":
-        case = Case.ACCUSATIVE
-    else:
-        case = Case.GENITIVE
-    if name != "":
-        name = p.firstname(name, case)
-        if surname != "":
-            surname = p.lastname(surname, case, Gender.FEMALE)
-    return name, surname
 
 
 def update_counter():

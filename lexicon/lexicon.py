@@ -1,15 +1,23 @@
 LEXICON: dict[str, str] = {
-    'yes': 'Да',
-    'no': 'Нет',
+    # Commands messages
+    '/start': 'Привет! Здесь ты можешь встать в электронную очередь на оплату проживания. '
+              'Для начала давай познакомимся. Отправь мне свои ФИО, например, "Иванов Иван Иванович".',
+    '/start-registered': 'Снова привет!',
+    '/help': 'Помощь',
+
+    # User messages
+    'reply-other': 'Я тебя не понимаю :(',
+
+    # User markups
+    '_keygen': 'Сгенерировать ключ',
 }
 
+
 LEXICON_COMMANDS: dict[str, str] = {
-    '/hate': 'Захейтить чела',
-    '/list': 'Список сучек',
-    '/forgive': 'Простить чела',
-    '/random': 'Рандомный хейт'
+    '/start': 'Старт',
+    '/help': 'Справка по работе бота'
 }
 
 
 def lexicon(key: str) -> str:
-    return LEXICON[key.split('_')[0]]
+    return LEXICON[key]
