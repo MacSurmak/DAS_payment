@@ -8,6 +8,8 @@ from aiogram import F
 from aiogram.filters import Command, CommandStart
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message, CallbackQuery
+
+from database import window
 from database.crud import *
 from filters.filters import IsRegistered, NoData
 from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup, \
@@ -180,3 +182,25 @@ async def day(callback: CallbackQuery):
     :param callback: Telegram callback
     """
     await callback.answer(text=lexicon('unavailable'), show_alert=True)
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'time')
+async def day(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    if select_signed(callback.message.chat.id)[0] == 1:
+        await callback.answer(text=lexicon('already'), show_alert=True)
+    else:
+        timestamp = callback.data.split('_')[1].split(':')
+        if select_time_signed(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]))[0] == 1:
+            await callback.answer(text=lexicon('already_time'), show_alert=True)
+        else:
+            window = select_window(callback.message.chat.id)[0]
+            update_signed(1, callback.message.chat.id)
+            update_time(1, int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), callback.message.chat.id)
+            await callback.message.edit_text(text=lexicon('signed').format(date=f'{timestamp[1]} '
+                                                                                f'{lexicon(timestamp[0]).split(' ')[0]}',
+                                                                           time=f'{timestamp[2]}:{timestamp[3]}',
+                                                                           window=window), reply_markup=None)

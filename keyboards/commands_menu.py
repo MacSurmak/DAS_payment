@@ -109,7 +109,7 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     month = int(timestamp.split('-')[1])
 
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(InlineKeyboardButton(text=f'{day} {lexicon(month)}', callback_data='_empty'))
+    kb_builder.row(InlineKeyboardButton(text=f'{day} {lexicon(f'{month}')}', callback_data='_empty'))
 
     times = select_whole_day(day, month, window)
     buttons_times: list[InlineKeyboardButton] = []
@@ -117,8 +117,15 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     for time in times:
         hour = time[0]
         minute = time[1]
-        buttons_times.append(InlineKeyboardButton(text=f'{hour}:{minute if minute > 9 else f"0{minute}"}',
-                                                  callback_data=f'{hour}:{minute if minute > 9 else f"0{minute}"}'))
+        signed = time[2]
+
+        if signed == 0:
+            sym = '✅'
+        else:
+            sym = '✖'
+
+        buttons_times.append(InlineKeyboardButton(text=f'{hour}:{minute if minute > 9 else f"0{minute}"}{sym}',
+                                                  callback_data=f'time_{month}:{day}:{hour}:{minute if minute > 9 else f"0{minute}"}'))
 
     kb_builder.row(*buttons_times, width=3)
 

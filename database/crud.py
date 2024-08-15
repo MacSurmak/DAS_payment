@@ -97,6 +97,40 @@ def select_signed(user_id):
     return results
 
 
+def select_time_signed(month, day, hour, minute):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT signed FROM Timetable WHERE (month, day, hour, minute) = (?, ?, ?, ?)',
+                   (month, day, hour, minute,))
+    results = cursor.fetchone()
+
+    connection.close()
+
+    return results
+
+
+def update_signed(value, user_id):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Users SET signed  = ? WHERE user_id = ?', (value, user_id,))
+
+    connection.commit()
+    connection.close()
+
+
+def update_time(value, month, day, hour, minute, user_id):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Timetable SET (signed, by_user) = (?, ?) '
+                   'WHERE (month, day, hour, minute) = (?, ?, ?, ?)', (value, user_id, month, day, hour, minute))
+
+    connection.commit()
+    connection.close()
+
+
 def select_window(user_id):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
@@ -171,7 +205,7 @@ def select_whole_day(day, month, window):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
 
-    cursor.execute('SELECT hour, minute FROM Timetable WHERE (month, day, window) = (?, ?, ?)',
+    cursor.execute('SELECT hour, minute, signed FROM Timetable WHERE (month, day, window) = (?, ?, ?)',
                    (month, day, window))
     results = cursor.fetchall()
 
