@@ -10,7 +10,8 @@ from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
 from filters.filters import IsRegistered, NoData
-from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup
+from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup, \
+    day_markup
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='messages-router')
@@ -139,27 +140,43 @@ async def aug(callback: CallbackQuery):
                                      reply_markup=calendar_markup(datetime.today().month))
 
 
-@router.callback_query(lambda callback: callback.data == 'calendar_back')
+@router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
 async def aug(callback: CallbackQuery):
     """
     Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
     window = select_window(callback.message.chat.id)[0]
-    update_year(user_id=callback.message.chat.id,
-                year=callback.data.split('_')[0])
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(8))
 
 
-@router.callback_query(lambda callback: callback.data == 'calendar_next')
-async def aug(callback: CallbackQuery):
+@router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
+async def sep(callback: CallbackQuery):
     """
     Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
     window = select_window(callback.message.chat.id)[0]
-    update_year(user_id=callback.message.chat.id,
-                year=callback.data.split('_')[0])
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(9))
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'yes')
+async def day(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    window = select_window(callback.message.chat.id)[0]
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=day_markup(callback.data.split('_')[2], window))
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'no')
+async def day(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    await callback.answer(text=lexicon('unavailable'), show_alert=True)

@@ -1,6 +1,6 @@
 import sqlite3
 from calendar import month
-from datetime import datetime
+from datetime import datetime, date
 
 
 def insert_id(user_id):
@@ -166,15 +166,28 @@ def select_whole_day_free(day, month):
     connection.close()
     return results
 
+
+def select_whole_day(day, month, window):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT hour, minute FROM Timetable WHERE (month, day, window) = (?, ?, ?)',
+                   (month, day, window))
+    results = cursor.fetchall()
+
+    connection.close()
+    return results
+
+
 def select_last_day():
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
 
-    cursor.execute('SELECT (month, day) FROM Admin')
+    cursor.execute('SELECT month, day FROM Admin')
     results = cursor.fetchone()
 
     connection.close()
 
-    return datetime(year=2024, month=results[0], day=results[1])
+    return date(year=2024, month=results[0], day=results[1])
 
 

@@ -1,5 +1,5 @@
 import calendar
-from datetime import datetime
+from datetime import datetime, date
 
 from aiogram_calendar import SimpleCalendar
 from aiogram import Bot
@@ -7,7 +7,7 @@ from aiogram.types import BotCommand
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from database.crud import select_whole_day_free
+from database.crud import select_whole_day_free, select_whole_day, select_last_day
 from lexicon.lexicon import lexicon, LEXICON
 
 from lexicon.lexicon import LEXICON_COMMANDS
@@ -66,20 +66,31 @@ def faculty_markup() -> InlineKeyboardMarkup:
 def calendar_markup(month) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
+    buttons_weekdays: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=day, callback_data='_empty') for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    ]
+    kb_builder.row(*buttons_weekdays, width=7)
 
     obj = calendar.Calendar()
     days = obj.itermonthdates(2024, month)
 
+    last_day = select_last_day()
+
     buttons_days: list[InlineKeyboardButton] = []
     for day in days:
         if day.month == month:
-            if 0 in select_whole_day_free(day.day, day.month):
+            if day > last_day or day < date.today():
+                sym = '✖'
+                code = 'no'
+            elif 0 in select_whole_day_free(day.day, day.month):
                 sym = '✅'
+                code = 'yes'
             else:
                 sym = '✖'
-            buttons_days.append(InlineKeyboardButton(text=str(day.day) + sym, callback_data=f'calendar_{day}-{month}'))
+                code = 'no'
+            buttons_days.append(InlineKeyboardButton(text=str(day.day) + sym, callback_data=f'day_{code}_{day.day}-{day.month}'))
         else:
-            buttons_days.append(InlineKeyboardButton(text=' ', callback_data=f'calendar_{day}-{month}'))
+            buttons_days.append(InlineKeyboardButton(text=' ', callback_data=f'empty_{day}-{month}'))
 
     kb_builder.row(*buttons_days, width=7)
 
@@ -93,3 +104,24 @@ def calendar_markup(month) -> InlineKeyboardMarkup:
     return kb_builder.as_markup(resize_keyboard=True)
 
 
+def day_markup(timestamp, window) -> InlineKeyboardMarkup:
+    day = int(timestamp.split('-')[0])
+    month = int(timestamp.split('-')[1])
+
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    kb_builder.row(InlineKeyboardButton(text=f'{day} {lexicon(month)}', callback_data='_empty'))
+
+    times = select_whole_day(day, month, window)
+    buttons_times: list[InlineKeyboardButton] = []
+
+    for time in times:
+        hour = time[0]
+        minute = time[1]
+        buttons_times.append(InlineKeyboardButton(text=f'{hour}:{minute if minute > 9 else f"0{minute}"}',
+                                                  callback_data=f'{hour}:{minute if minute > 9 else f"0{minute}"}'))
+
+    kb_builder.row(*buttons_times, width=3)
+
+    kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
+                                        callback_data=f'back_to_calendar_{month}'))
+    return kb_builder.as_markup(resize_keyboard=True)
