@@ -1,13 +1,16 @@
 import re
 import random
+from datetime import datetime, timedelta
 
+from aiogram_calendar import SimpleCalendar, SimpleCalendarCallback, DialogCalendar, DialogCalendarCallback
 from aiogram import Router, Bot
 from aiogram import F
 from aiogram.filters import Command, CommandStart
+from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
 from filters.filters import IsRegistered, NoData
-from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup
+from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='messages-router')
@@ -124,12 +127,39 @@ async def bachelor(callback: CallbackQuery):
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
-async def year(callback: CallbackQuery):
+async def aug(callback: CallbackQuery):
     """
     Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
+    window = select_window(callback.message.chat.id)[0]
     update_year(user_id=callback.message.chat.id,
                 year=callback.data.split('_')[0])
-    await callback.message.edit_text(text=lexicon('ready'),
-                                     reply_markup=None)
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=calendar_markup(datetime.today().month))
+
+
+@router.callback_query(lambda callback: callback.data == 'calendar_back')
+async def aug(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    window = select_window(callback.message.chat.id)[0]
+    update_year(user_id=callback.message.chat.id,
+                year=callback.data.split('_')[0])
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=calendar_markup(8))
+
+
+@router.callback_query(lambda callback: callback.data == 'calendar_next')
+async def aug(callback: CallbackQuery):
+    """
+    Handles callback with 'year' and adds it to database
+    :param callback: Telegram callback
+    """
+    window = select_window(callback.message.chat.id)[0]
+    update_year(user_id=callback.message.chat.id,
+                year=callback.data.split('_')[0])
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=calendar_markup(9))

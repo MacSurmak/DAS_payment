@@ -28,3 +28,11 @@ class NoData(BaseFilter):
         if select_data(message.chat.id)[0] is None:
             state = True
         return state
+
+
+class IsSigned(BaseFilter):
+    async def __call__(self, message: Message = None, callback: CallbackQuery = None) -> bool:
+        state = False
+        if select_signed(message.chat.id)[0] == 1:
+            state = True
+        return state

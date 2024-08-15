@@ -1,12 +1,13 @@
 import re
 import random
+from datetime import datetime
 
 from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
-from filters.filters import IsRegistered, NoData
-from keyboards.commands_menu import yesno_markup
+from filters.filters import IsRegistered, NoData, IsSigned
+from keyboards.commands_menu import yesno_markup, calendar_markup
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='commands-router')
@@ -30,6 +31,17 @@ async def process_start_command(message: Message):
     :param message: Telegram message
     """
     await message.answer(text=lexicon('/start-registered'))
+
+
+@router.message(CommandStart(), IsRegistered(), ~NoData(), ~IsSigned())
+async def process_start_command(message: Message):
+    """
+    Handles /start command for registered users with data
+    :param message: Telegram message
+    """
+    window = select_window(message.chat.id)[0]
+    await message.answer(text=lexicon('ready').format(window=window),
+                         reply_markup=calendar_markup(datetime.today().month))
 
 
 @router.message(CommandStart(), IsRegistered(), ~NoData())
