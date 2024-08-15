@@ -14,6 +14,7 @@ patronymic TEXT,
 faculty TEXT,
 degree TEXT,
 year INTEGER,
+window INTEGER,
 signed INTEGER DEFAULT '0'
 )
 ''')

@@ -30,7 +30,7 @@ def degree_markup() -> InlineKeyboardMarkup:
         InlineKeyboardButton(text=lexicon(key), callback_data=f'degree_{key}') for key in ['bachelor', 'master', 'specialist']
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(*buttons, width=2)
+    kb_builder.row(*buttons, width=2).row(InlineKeyboardButton(text=lexicon('back'), callback_data='back_degree'))
     return kb_builder.as_markup(resize_keyboard=True)
 
 
@@ -39,14 +39,20 @@ def year_markup(length) -> InlineKeyboardMarkup:
         InlineKeyboardButton(text=f'{i + 1} курс', callback_data=f'{i + 1}_year') for i in range(length)
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(*buttons, width=2)
+    kb_builder.row(*buttons, width=2).row(InlineKeyboardButton(text=lexicon('back'), callback_data='back_year'))
     return kb_builder.as_markup(resize_keyboard=True)
 
 
 def faculty_markup() -> InlineKeyboardMarkup:
-    buttons: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['bio', 'geo',]
+    buttons_long: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['bio', 'geo', 'jou',
+                                                                                            'ist', 'pol', 'soi',
+                                                                                            'psy', 'phd', 'eco']
+    ]
+    buttons_short: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['kpu', 'ssn', 'isa',
+                                                                                            'fbb', 'ffm', 'fhi']
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(*buttons, width=2)
+    kb_builder.row(*buttons_long, width=2).row(*buttons_short, width=3)
     return kb_builder.as_markup(resize_keyboard=True)

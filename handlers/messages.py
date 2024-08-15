@@ -70,6 +70,16 @@ async def yes(callback: CallbackQuery):
                                      reply_markup=faculty_markup())
 
 
+@router.callback_query(lambda callback: callback.data == 'back_degree')
+async def yes(callback: CallbackQuery):
+    """
+    Handles callback with 'back' and adds it to database
+    :param callback: Telegram callback
+    """
+    await callback.message.edit_text(text=lexicon('faculty_2'),
+                                     reply_markup=faculty_markup())
+
+
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'faculty')
 async def faculty(callback: CallbackQuery):
     """
@@ -79,6 +89,16 @@ async def faculty(callback: CallbackQuery):
     update_faculty(user_id=callback.message.chat.id,
                    faculty=lexicon(key=callback.data.split('_')[1]))
     await callback.message.edit_text(text=lexicon('accepted'),
+                                     reply_markup=degree_markup())
+
+
+@router.callback_query(lambda callback: callback.data == 'back_year')
+async def yes(callback: CallbackQuery):
+    """
+    Handles callback with 'back' and adds it to database
+    :param callback: Telegram callback
+    """
+    await callback.message.edit_text(text=lexicon('accepted_2'),
                                      reply_markup=degree_markup())
 
 
