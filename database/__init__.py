@@ -1,4 +1,6 @@
 import sqlite3
+import calendar
+import datetime
 
 # Устанавливаем соединение с базой данных
 connection = sqlite3.connect('database/main.db')
@@ -19,12 +21,75 @@ signed INTEGER DEFAULT '0'
 )
 ''')
 
-# cursor.execute('''
-# CREATE TABLE IF NOT EXISTS Registered (
-# num INTEGER PRIMARY KEY,
-# id TEXT NOT NULL
-# )
-# ''')
+# Создаем таблицу Timetable
+cursor.execute('''
+CREATE TABLE IF NOT EXISTS Timetable (
+timestamp TEXT PRIMARY KEY,
+month INTEGER,
+day INTEGER,
+hour INTEGER,
+minute INTEGER,
+weekday TEXT,
+signed INTEGER DEFAULT '0',
+by_user INTEGER,
+window INTEGER
+)
+''')
+
+week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+
+obj = calendar.Calendar()
+today = datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+last_day = datetime.datetime(2024, 9, 30)
+
+while today <= last_day:
+    if today.weekday() in [0, 2, 4]:
+
+        time1 = today + datetime.timedelta(hours=9, minutes=20)
+        time2 = today + datetime.timedelta(hours=12, minutes=35)
+        window = 1
+        while time1 <= time2:
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute}'
+            cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                           (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], window))
+            time1 += datetime.timedelta(minutes=5)
+            if window < 3:
+                window += 1
+            else:
+                window = 1
+
+        time1 = today + datetime.timedelta(hours=14, minutes=10)
+        time2 = today + datetime.timedelta(hours=17, minutes=20)
+        while time1 <= time2:
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute}'
+            cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                           (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], window))
+            time1 += datetime.timedelta(minutes=5)
+            if window < 3:
+                window += 1
+            else:
+                window = 1
+
+    elif today.weekday() in [1, 3]:
+
+        time1 = today + datetime.timedelta(hours=14, minutes=10)
+        time2 = today + datetime.timedelta(hours=17, minutes=20)
+        window = 1
+        while time1 <= time2:
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute}'
+            cursor.execute(
+                'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], window))
+            time1 += datetime.timedelta(minutes=5)
+            if window < 3:
+                window += 1
+            else:
+                window = 1
+
+    else:
+        pass
+
+    today += datetime.timedelta(days=1)
 
 # Сохраняем изменения и закрываем соединение
 connection.commit()

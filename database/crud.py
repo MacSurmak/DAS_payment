@@ -116,12 +116,17 @@ def update_year(user_id, year):
     connection.close()
 
 
-def update_faculty(user_id, faculty):
+def update_faculty(user_id, faculty, window):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
 
-    cursor.execute('UPDATE Users SET faculty = ? WHERE user_id = ?',
-                   (faculty, user_id,))
+    cursor.execute('UPDATE Users SET faculty = ?, window = ? WHERE user_id = ?',
+                   (faculty, window, user_id,))
 
     connection.commit()
     connection.close()
+
+
+# def make_days(today):
+
+

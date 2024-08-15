@@ -86,8 +86,11 @@ async def faculty(callback: CallbackQuery):
     Handles callback with 'faculty' and adds it to database
     :param callback: Telegram callback
     """
+    faculty = lexicon(key=callback.data.split('_')[1])
+    window = lexicon(faculty)
     update_faculty(user_id=callback.message.chat.id,
-                   faculty=lexicon(key=callback.data.split('_')[1]))
+                   faculty=faculty,
+                   window=window)
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=degree_markup())
 
@@ -130,5 +133,3 @@ async def year(callback: CallbackQuery):
                 year=callback.data.split('_')[0])
     await callback.message.edit_text(text=lexicon('ready'),
                                      reply_markup=None)
-
-
