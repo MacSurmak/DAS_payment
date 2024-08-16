@@ -3,6 +3,78 @@ from calendar import month
 from datetime import datetime, date
 
 
+# def select(table, columns, where=''):
+#
+#     connection = sqlite3.connect('database/main.db')
+#     cursor = connection.cursor()
+#
+#     if where:
+#         params = where.split(', ')
+#         where_str = '('
+#         for param in range(len(params)):
+#             where_str += params[param].split(' = ')[0]
+#             if param < len(params) - 1:
+#                 where_str += ', '
+#         where_str += ') = ('
+#         for param in range(len(params)):
+#             where_str += '?'
+#             if param < len(params) - 1:
+#                 where_str += ', '
+#         where_str += ')'
+#         cursor.execute(f'SELECT {columns} FROM Users WHERE {where_str}')
+#
+#     results = cursor.fetchall()
+#
+#     connection.close()
+#
+#     return results
+
+
+def select(table, columns, **where):
+
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    if where:
+        params = '('
+        values = ''
+        values_list = ()
+        for param, value in where:
+            param += ', '
+            params += param
+            values += '?, '
+            values_list += value
+        params, values = params[:-2], values[:-2]
+        params += ')'
+        values += ')'
+
+        cursor.execute(f'SELECT {columns} FROM Users WHERE {params} = {values}',
+                       values_list)
+
+    # if where:
+    #     params = where.split(', ')
+    #     where_str = '('
+    #     for param in range(len(params)):
+    #         where_str += params[param].split(' = ')[0]
+    #         if param < len(params) - 1:
+    #             where_str += ', '
+    #     where_str += ') = ('
+    #     for param in range(len(params)):
+    #         where_str += '?'
+    #         if param < len(params) - 1:
+    #             where_str += ', '
+    #     where_str += ')'
+    #     cursor.execute(f'SELECT {columns} FROM Users WHERE {where_str}')
+
+    results = cursor.fetchall()
+
+    connection.close()
+
+    return results
+
+
+### Users
+
 def insert_id(user_id):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
@@ -14,53 +86,6 @@ def insert_id(user_id):
     connection.close()
 
 
-# def select(name, surname):
-#     connection = sqlite3.connect('database/bitches.db')
-#     cursor = connection.cursor()
-#
-#     cursor.execute('SELECT name, surname FROM Bitches WHERE name = ? AND surname = ?', (name, surname,))
-#     results = cursor.fetchall()
-#
-#     connection.close()
-#
-#     return results
-#
-#
-# def select_all():
-#     connection = sqlite3.connect('database/bitches.db')
-#     cursor = connection.cursor()
-#
-#     cursor.execute('SELECT name, surname, counter FROM Bitches')
-#     results = cursor.fetchall()
-#
-#     connection.close()
-#
-#     return results
-#
-#
-#
-#
-# def delete(name, surname):
-#     connection = sqlite3.connect('database/bitches.db')
-#     cursor = connection.cursor()
-#
-#     cursor.execute('DELETE FROM Bitches WHERE name = ? AND surname = ?', (name, surname,))
-#
-#     connection.commit()
-#     connection.close()
-#
-#
-# def insert_id(id):
-#     connection = sqlite3.connect('database/bitches.db')
-#     cursor = connection.cursor()
-#
-#     cursor.execute('INSERT INTO Registered (id) VALUES (?)',
-#                    (id,))
-#
-#     connection.commit()
-#     connection.close()
-#
-#
 def select_all_id():
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
@@ -97,12 +122,11 @@ def select_signed(user_id):
     return results
 
 
-def select_time_signed(month, day, hour, minute):
+def select_window(user_id):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
 
-    cursor.execute('SELECT signed FROM Timetable WHERE (month, day, hour, minute) = (?, ?, ?, ?)',
-                   (month, day, hour, minute,))
+    cursor.execute('SELECT window FROM Users WHERE user_id = ?', (user_id,))
     results = cursor.fetchone()
 
     connection.close()
@@ -118,29 +142,6 @@ def update_signed(value, user_id):
 
     connection.commit()
     connection.close()
-
-
-def update_time(value, month, day, hour, minute, user_id):
-    connection = sqlite3.connect('database/main.db')
-    cursor = connection.cursor()
-
-    cursor.execute('UPDATE Timetable SET (signed, by_user) = (?, ?) '
-                   'WHERE (month, day, hour, minute) = (?, ?, ?, ?)', (value, user_id, month, day, hour, minute))
-
-    connection.commit()
-    connection.close()
-
-
-def select_window(user_id):
-    connection = sqlite3.connect('database/main.db')
-    cursor = connection.cursor()
-
-    cursor.execute('SELECT window FROM Users WHERE user_id = ?', (user_id,))
-    results = cursor.fetchone()
-
-    connection.close()
-
-    return results
 
 
 def update_name(user_id, name, surname, patronymic):
@@ -187,6 +188,31 @@ def update_faculty(user_id, faculty, window):
     connection.close()
 
 
+# def delete(name, surname):
+#     connection = sqlite3.connect('database/bitches.db')
+#     cursor = connection.cursor()
+#
+#     cursor.execute('DELETE FROM Bitches WHERE name = ? AND surname = ?', (name, surname,))
+#
+#     connection.commit()
+#     connection.close()
+
+
+### Timetable
+
+def select_time_signed(month, day, hour, minute):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('SELECT signed FROM Timetable WHERE (month, day, hour, minute) = (?, ?, ?, ?)',
+                   (month, day, hour, minute,))
+    results = cursor.fetchone()
+
+    connection.close()
+
+    return results
+
+
 def select_whole_day_free(day, month):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
@@ -212,6 +238,19 @@ def select_whole_day(day, month, window):
     connection.close()
     return results
 
+
+def update_time(value, month, day, hour, minute, user_id):
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute('UPDATE Timetable SET (signed, by_user) = (?, ?) '
+                   'WHERE (month, day, hour, minute) = (?, ?, ?, ?)', (value, user_id, month, day, hour, minute))
+
+    connection.commit()
+    connection.close()
+
+
+### Admin
 
 def select_last_day():
     connection = sqlite3.connect('database/main.db')

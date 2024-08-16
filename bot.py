@@ -6,8 +6,9 @@ from aiogram.client.bot import DefaultBotProperties
 from config_data import config
 from handlers import commands, messages
 from keyboards.commands_menu import set_commands_menu
-from services import setup_logger, update_counter, notify
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+
+from services import setup_logger
 
 
 async def main() -> None:
@@ -23,8 +24,8 @@ async def main() -> None:
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
     scheduler.start()
 
-    scheduler.add_job(update_counter, 'cron', hour='00', minute='00')
-    scheduler.add_job(notify, 'cron', hour='12-23', minute='*/5', args=[bot])
+    # scheduler.add_job(update_counter, 'cron', hour='00', minute='00')
+    # scheduler.add_job(notify_day_before, 'cron', hour='9-18', minute='*/5', args=[bot])
 
     await set_commands_menu(bot)
     await bot.delete_webhook(drop_pending_updates=True)

@@ -50,6 +50,10 @@ async def process_start_command(message: Message):
     Handles /start command for registered users with data
     :param message: Telegram message
     """
+    print(select(table='Users',
+                 columns='faculty, user_id',
+                 signed = 1,
+                 faculty = 'Биологический'))
     await message.answer(text=lexicon('/start-data').format(name=select_data(message.chat.id)[0]))
 
 # @router.message(Command("hate"), IsAllowed())
