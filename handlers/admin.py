@@ -29,8 +29,8 @@ async def process_info_command(message: Message):
     """
     signed = len(read(table='Users',
                       signed=1))
-    today = date.today()
 
+    today = date.today()
     result = read(table='Lastday',
                   columns='month, day',
                   fetch=1)
@@ -44,3 +44,24 @@ async def process_info_command(message: Message):
         today += timedelta(days=1)
 
     await message.answer(text=lexicon('/info').format(signed=signed, vacant=vacant))
+
+
+@router.message(Command('table'))
+async def process_table_command(message: Message):
+    """
+    :param message: Telegram message
+    """
+
+    today = date.today()
+    result = read(table='Lastday',
+                  columns='month, day',
+                  fetch=1)
+    last_day = date(year=2024, month=result[0], day=result[1])
+    while today <= last_day:
+        day = read(table='Timetable',
+                   month=today.month,
+                   day=today.day)
+        print(day)
+        today += timedelta(days=1)
+
+    # await message.answer(text=lexicon('/info').format(signed=signed, vacant=vacant))
