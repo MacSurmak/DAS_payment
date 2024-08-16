@@ -7,7 +7,7 @@ from aiogram.types import BotCommand
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
-from database.crud import select_whole_day_free, select_whole_day, select_last_day
+from database.crud import *
 from lexicon.lexicon import lexicon, LEXICON
 
 from lexicon.lexicon import LEXICON_COMMANDS
@@ -74,7 +74,11 @@ def calendar_markup(month) -> InlineKeyboardMarkup:
     obj = calendar.Calendar()
     days = obj.itermonthdates(2024, month)
 
-    last_day = select_last_day()
+    result = read(table='Lastday',
+                  columns='month, day',
+                  fetch=1)
+
+    last_day = date(year=2024, month=result[0], day=result[1])
 
     buttons_days: list[InlineKeyboardButton] = []
     for day in days:
@@ -82,7 +86,10 @@ def calendar_markup(month) -> InlineKeyboardMarkup:
             if day > last_day or day < date.today():
                 sym = '✖'
                 code = 'no'
-            elif 0 in select_whole_day_free(day.day, day.month):
+            elif 0 in read(table='Timetable',
+                           columns='signed',
+                           month=day.month,
+                           day=day.day):
                 sym = '✅'
                 code = 'yes'
             else:
@@ -111,7 +118,12 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(InlineKeyboardButton(text=f'{day} {lexicon(f'{month}')}', callback_data='_empty'))
 
-    times = select_whole_day(day, month, window)
+    times = read(table='Timetable',
+                 columns='hour, minute, signed',
+                 month=month,
+                 day=day,
+                 window=window)
+
     buttons_times: list[InlineKeyboardButton] = []
 
     for time in times:

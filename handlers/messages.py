@@ -22,18 +22,17 @@ router: Router = Router(name='messages-router')
 @router.message(~IsRegistered())
 async def process_registration(message: Message):
     """
-    Handles text and adds user into database
     :param message: Telegram message
     """
     user_id = message.from_user.id
-    insert_id(user_id)
+    create(table='Users',
+           user_id=user_id)
     await message.answer(text=lexicon('/start'))
 
 
 @router.message(IsRegistered(), NoData(), F.text.replace(' ', '').isalpha())
 async def process_adding_data(message: Message):
     """
-    Handles text from registered user with no data and adds it if present
     :param message: Telegram message
     """
     text = message.text.split()
@@ -51,7 +50,6 @@ async def process_adding_data(message: Message):
 @router.callback_query(lambda callback: callback.data == '_no')
 async def no(callback: CallbackQuery):
     """
-    Handles callback with 'no' and returns to waiting for name
     :param callback: Telegram callback
     """
     await callback.message.edit_text(text=lexicon('repeat'),
@@ -61,17 +59,17 @@ async def no(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data == '_yes')
 async def yes(callback: CallbackQuery):
     """
-    Handles callback with 'yes' and adds it to database
     :param callback: Telegram callback
     """
     text = callback.message.text.split('\n')
     surname = text[0].split(' ')[1]
     name = text[1].split(' ')[1]
     patronymic = text[2].split(' ')[1]
-    update_name(user_id=callback.message.chat.id,
-                name=name,
-                surname=surname,
-                patronymic=patronymic)
+    update(table='Users',
+           name=name,
+           surname=surname,
+           patronymic=patronymic,
+           where=f'user_id = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('faculty').format(name=name),
                                      reply_markup=faculty_markup())
 
@@ -79,7 +77,6 @@ async def yes(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data == 'back_degree')
 async def yes(callback: CallbackQuery):
     """
-    Handles callback with 'back' and adds it to database
     :param callback: Telegram callback
     """
     await callback.message.edit_text(text=lexicon('faculty_2'),
@@ -89,14 +86,17 @@ async def yes(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'faculty')
 async def faculty(callback: CallbackQuery):
     """
-    Handles callback with 'faculty' and adds it to database
     :param callback: Telegram callback
     """
     faculty = lexicon(key=callback.data.split('_')[1])
-    window = lexicon(faculty)
-    update_faculty(user_id=callback.message.chat.id,
-                   faculty=faculty,
-                   window=window)
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
+    update(table='Users',
+           faculty=faculty,
+           window=window,
+           where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=degree_markup())
 
@@ -104,7 +104,6 @@ async def faculty(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data == 'back_year')
 async def yes(callback: CallbackQuery):
     """
-    Handles callback with 'back' and adds it to database
     :param callback: Telegram callback
     """
     await callback.message.edit_text(text=lexicon('accepted_2'),
@@ -114,7 +113,6 @@ async def yes(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'degree')
 async def bachelor(callback: CallbackQuery):
     """
-    Handles callback with degree and adds it to database
     :param callback: Telegram callback
     """
     degree = lexicon(key=callback.data.split('_')[1])
@@ -123,8 +121,9 @@ async def bachelor(callback: CallbackQuery):
         'Магистратура': 2,
         'Специалитет': 6,
     }
-    update_degree(user_id=callback.message.chat.id,
-                  degree=degree)
+    update(table='Users',
+           degree=degree,
+           where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=year_markup(length=lengths[degree]))
 
@@ -132,12 +131,15 @@ async def bachelor(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
 async def aug(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
-    window = select_window(callback.message.chat.id)[0]
-    update_year(user_id=callback.message.chat.id,
-                year=callback.data.split('_')[0])
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
+    update(table='Users',
+           year=callback.data.split('_')[0],
+           where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(datetime.today().month))
 
@@ -145,10 +147,12 @@ async def aug(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
 async def aug(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
-    window = select_window(callback.message.chat.id)[0]
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(8))
 
@@ -156,10 +160,12 @@ async def aug(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
 async def sep(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
-    window = select_window(callback.message.chat.id)[0]
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(9))
 
@@ -167,10 +173,12 @@ async def sep(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'yes')
 async def day(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
-    window = select_window(callback.message.chat.id)[0]
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=day_markup(callback.data.split('_')[2], window))
 
@@ -178,7 +186,6 @@ async def day(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'no')
 async def day(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
     await callback.answer(text=lexicon('unavailable'), show_alert=True)
@@ -187,19 +194,38 @@ async def day(callback: CallbackQuery):
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'time')
 async def day(callback: CallbackQuery):
     """
-    Handles callback with 'year' and adds it to database
     :param callback: Telegram callback
     """
-    if select_signed(callback.message.chat.id)[0] == 1:
+    if read(table='Users',
+            columns='signed',
+            user_id=callback.message.chat.id,
+            fetch=1)[0] == 1:
         await callback.answer(text=lexicon('already'), show_alert=True)
     else:
         timestamp = callback.data.split('_')[1].split(':')
-        if select_time_signed(int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]))[0] == 1:
+        if read(table='Timetable',
+                columns='signed',
+                month=int(timestamp[0]),
+                day=int(timestamp[1]),
+                hour=int(timestamp[2]),
+                minute=int(timestamp[3]),
+                fetch=1)[0] == 1:
             await callback.answer(text=lexicon('already_time'), show_alert=True)
         else:
-            window = select_window(callback.message.chat.id)[0]
-            update_signed(1, callback.message.chat.id)
-            update_time(1, int(timestamp[0]), int(timestamp[1]), int(timestamp[2]), int(timestamp[3]), callback.message.chat.id)
+            window = read(table='Users',
+                          columns='window',
+                          user_id=callback.message.chat.id,
+                          fetch=1)[0]
+            update(table='Users',
+                   signed=1,
+                   where=f'user_id={callback.message.chat.id}')
+            update(table='Timetable',
+                   signed=1,
+                   by_user=callback.message.chat.id,
+                   where=f'month={int(timestamp[0])}, '
+                         f'day={int(timestamp[1])}, '
+                         f'hour={int(timestamp[2])}, '
+                         f'minute={int(timestamp[3])}')
             await callback.message.edit_text(text=lexicon('signed').format(date=f'{timestamp[1]} '
                                                                                 f'{lexicon(timestamp[0]).split(' ')[0]}',
                                                                            time=f'{timestamp[2]}:{timestamp[3]}',

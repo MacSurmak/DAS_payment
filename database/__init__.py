@@ -39,10 +39,10 @@ window INTEGER
 
 # Создаем таблицу Admin
 cursor.execute('''
-CREATE TABLE IF NOT EXISTS Admin (
-id INTEGER PRIMARY KEY,
-month INTEGER,
-day INTEGER
+CREATE TABLE IF NOT EXISTS Lastday (
+id INTEGER PRIMARY KEY DEFAULT '1',
+month INTEGER DEFAULT '8',
+day INTEGER DEFAULT '27'
 )
 ''')
 
