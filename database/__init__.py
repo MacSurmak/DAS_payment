@@ -18,7 +18,8 @@ faculty TEXT,
 degree TEXT,
 year INTEGER,
 window INTEGER,
-signed INTEGER DEFAULT '0'
+signed INTEGER DEFAULT '0',
+admin INTEGER DEFAULT '0'
 )
 ''')
 

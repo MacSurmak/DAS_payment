@@ -1,5 +1,7 @@
 import re
 import random
+import hashlib
+from config_data import config
 from datetime import datetime
 
 from aiogram import Router, Bot
@@ -54,3 +56,22 @@ async def process_start_command(message: Message):
                                                                       columns='name',
                                                                       user_id=message.chat.id,
                                                                       fetch=1)[0]))
+
+
+@router.message(Command('admin'))
+async def process_admin_command(message: Message):
+    """
+    :param message: Telegram message
+    """
+    try:
+        password = message.text.split(' ')[1]
+        hash = hashlib.sha256(password.encode('utf-8')).hexdigest()
+        if hash == config.bot.hash:
+            await message.answer(text=lexicon('/admin-success'))
+            update(table='Users',
+                   admin=1,
+                   where=f'user_id={message.chat.id}')
+        else:
+            await message.answer(text=lexicon('/admin-deny'))
+    except IndexError:
+        await message.answer(text=lexicon('/admin-no-pass'))
