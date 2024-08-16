@@ -86,10 +86,10 @@ def calendar_markup(month) -> InlineKeyboardMarkup:
             if day > last_day or day < date.today():
                 sym = '✖'
                 code = 'no'
-            elif 0 in read(table='Timetable',
-                           columns='signed',
-                           month=day.month,
-                           day=day.day):
+            elif (0,) in read(table='Timetable',
+                              columns='signed',
+                              month=day.month,
+                              day=day.day):
                 sym = '✅'
                 code = 'yes'
             else:

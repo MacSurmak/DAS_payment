@@ -89,10 +89,7 @@ async def faculty(callback: CallbackQuery):
     :param callback: Telegram callback
     """
     faculty = lexicon(key=callback.data.split('_')[1])
-    window = read(table='Users',
-                  columns='window',
-                  user_id=callback.message.chat.id,
-                  fetch=1)[0]
+    window = lexicon(faculty)
     update(table='Users',
            faculty=faculty,
            window=window,

@@ -37,20 +37,27 @@ window INTEGER
 )
 ''')
 
-# Создаем таблицу Admin
+# Создаем таблицу Lastday
 cursor.execute('''
 CREATE TABLE IF NOT EXISTS Lastday (
 id INTEGER PRIMARY KEY DEFAULT '1',
-month INTEGER DEFAULT '8',
-day INTEGER DEFAULT '27'
+month INTEGER,
+day INTEGER
 )
 ''')
+
+try:
+    cursor.execute(
+                    'INSERT INTO Lastday (id, month, day) VALUES (?, ?, ?)',
+                    ('1', '8', '27',))
+except IntegrityError:
+     pass
 
 try:
 
     week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
-    today = datetime.datetime(2024, 8, 20) #datetime.datetime.combine(datetime.date.today(), datetime.datetime.min.time())
+    today = datetime.datetime(2024, 8, 20)
     last_day = datetime.datetime(2024, 9, 30)
 
     while today <= last_day:
@@ -61,8 +68,10 @@ try:
             window = 1
             while time1 <= time2:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], window))
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time1.hour,
+                                time1.minute, week[today.weekday()], window,))
                 time1 += datetime.timedelta(minutes=5)
                 if window < 3:
                     window += 1

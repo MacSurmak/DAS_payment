@@ -52,4 +52,5 @@ async def process_start_command(message: Message):
     """
     await message.answer(text=lexicon('/start-data').format(name=read(table='Users',
                                                                       columns='name',
-                                                                      where='user_id={message.chat.id}')[0]))
+                                                                      user_id=message.chat.id,
+                                                                      fetch=1)[0]))
