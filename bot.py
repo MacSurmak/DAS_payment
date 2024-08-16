@@ -9,6 +9,7 @@ from keyboards.commands_menu import set_commands_menu
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from services import setup_logger
+from services.services import notify_day_before
 
 
 async def main() -> None:
@@ -18,15 +19,15 @@ async def main() -> None:
 
     dp: Dispatcher = Dispatcher()
 
+    dp.include_router(admin.router)
     dp.include_router(commands.router)
     dp.include_router(messages.router)
-    dp.include_router(admin.router)
 
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
     scheduler.start()
 
     # scheduler.add_job(update_counter, 'cron', hour='00', minute='00')
-    # scheduler.add_job(notify_day_before, 'cron', hour='9-18', minute='*/5', args=[bot])
+    scheduler.add_job(notify_day_before, 'cron', hour='9-18', minute='*/5', args=[bot])
 
     await set_commands_menu(bot)
     await bot.delete_webhook(drop_pending_updates=True)

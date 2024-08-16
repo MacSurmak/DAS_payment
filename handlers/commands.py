@@ -8,7 +8,7 @@ from aiogram import Router, Bot
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
 from database.crud import *
-from filters.filters import IsRegistered, NoData, IsSigned
+from filters.filters import IsRegistered, NoData, IsSigned, NoName
 from keyboards.commands_menu import yesno_markup, calendar_markup
 from lexicon.lexicon import lexicon
 
@@ -26,12 +26,20 @@ async def process_start_command(message: Message):
     await message.answer(text=lexicon('/start'))
 
 
-@router.message(CommandStart(), IsRegistered(), NoData())
+@router.message(CommandStart(), IsRegistered(), NoName())
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
     """
     await message.answer(text=lexicon('/start-registered'))
+
+
+@router.message(CommandStart(), IsRegistered(), NoData())
+async def process_start_command(message: Message):
+    """
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('/register'))
 
 
 @router.message(CommandStart(), IsRegistered(), ~NoData(), ~IsSigned())

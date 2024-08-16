@@ -15,7 +15,7 @@ class IsRegistered(BaseFilter):
         return state
 
 
-class NoData(BaseFilter):
+class NoName(BaseFilter):
     async def __call__(self, message: Message = None, callback: CallbackQuery = None) -> bool:
         state = False
         user_id = callback.message.chat.id if callback is not None else message.chat.id
@@ -23,6 +23,18 @@ class NoData(BaseFilter):
                 columns='name',
                 user_id=user_id,
                 fetch=1)[0] is None:
+            state = True
+        return state
+
+
+class NoData(BaseFilter):
+    async def __call__(self, message: Message = None, callback: CallbackQuery = None) -> bool:
+        state = False
+        user_id = callback.message.chat.id if callback is not None else message.chat.id
+        if None in read(table='Users',
+                        columns='faculty, degree, year',
+                        user_id=user_id,
+                        fetch=1):
             state = True
         return state
 
@@ -46,6 +58,6 @@ class IsAdmin(BaseFilter):
         if read(table='Users',
                 columns='admin',
                 user_id=user_id,
-                fetch=1)[0] == 1:
+                fetch=1) == (1,):
             state = True
         return state

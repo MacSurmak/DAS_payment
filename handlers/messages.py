@@ -8,10 +8,11 @@ from aiogram import F
 from aiogram.filters import Command, CommandStart
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message, CallbackQuery
+from pandas.plotting import table
 
 from database import window
 from database.crud import *
-from filters.filters import IsRegistered, NoData
+from filters.filters import IsRegistered, NoData, NoName, IsSigned
 from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup, \
     day_markup
 from lexicon.lexicon import lexicon
@@ -30,21 +31,41 @@ async def process_registration(message: Message):
     await message.answer(text=lexicon('/start'))
 
 
-@router.message(IsRegistered(), NoData(), F.text.replace(' ', '').isalpha())
+@router.message(IsRegistered(), NoName())
 async def process_adding_data(message: Message):
     """
     :param message: Telegram message
     """
-    text = message.text.split()
-    if len(text) in [2, 3]:
-        surname = text[0]
-        name = text[1]
-        if len(text) == 3:
-            patronymic = text[2]
+    if message.text:
+        if message.text.replace(' ', '').isalpha():
+            text = message.text.split()
+            if len(text) in [2, 3]:
+                surname = text[0]
+                name = text[1]
+                if len(text) == 3:
+                    patronymic = text[2]
+                else:
+                    patronymic = '-'
+                update(table='Users',
+                       name=name,
+                       surname=surname,
+                       patronymic=patronymic,
+                       where=f'user_id = {message.chat.id}')
+                await message.answer(
+                    text=lexicon('name-confirmation').format(name=name, surname=surname, patronymic=patronymic),
+                    reply_markup=yesno_markup())
+            elif len(text) == 1:
+                await message.answer(text=lexicon('name-wrong2'),
+                                     reply_markup=None)
+            else:
+                await message.answer(text=lexicon('name-wrong3'),
+                                     reply_markup=None)
         else:
-            patronymic = '-'
-    await message.answer(text=lexicon('name-confirmation').format(name=name, surname=surname, patronymic=patronymic),
-                         reply_markup=yesno_markup())
+            await message.answer(text=lexicon('name-wrong'),
+                                 reply_markup=None)
+    else:
+        await message.answer(text=lexicon('name-wrong4'),
+                             reply_markup=None)
 
 
 @router.callback_query(lambda callback: callback.data == '_no')
@@ -52,6 +73,11 @@ async def no(callback: CallbackQuery):
     """
     :param callback: Telegram callback
     """
+    update(table='Users',
+           name=None,
+           surname=None,
+           patronymic=None,
+           where=f'user_id = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('repeat'),
                                      reply_markup=None)
 
@@ -227,3 +253,26 @@ async def day(callback: CallbackQuery):
                                                                                 f'{lexicon(timestamp[0]).split(' ')[0]}',
                                                                            time=f'{timestamp[2]}:{timestamp[3]}',
                                                                            window=window), reply_markup=None)
+
+
+@router.message(IsSigned())
+async def other(message: Message):
+    """
+    :param message: Telegram message
+    """
+    timestamp = read(table = 'Timetable',
+                     columns='month, day, hour, minute',
+                     by_user = message.from_user.id,
+                     fetch=1)
+    await message.answer(text=lexicon('signed2').format(date=f'{timestamp[1]} '
+                                                             f'{lexicon(str(timestamp[0])).split(' ')[0]}',
+                                                        time=f'{timestamp[2]}:{timestamp[3]}',
+                                                        window=window), reply_markup=None)
+
+
+@router.message()
+async def other(message: Message):
+    """
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('reply-other'))
