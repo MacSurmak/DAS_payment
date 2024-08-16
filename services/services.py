@@ -6,6 +6,8 @@ from aiogram import Bot
 import random
 from datetime import datetime
 
+from lexicon.lexicon import lexicon
+
 
 async def notify_day_before(bot: Bot):
 
@@ -28,7 +30,7 @@ async def notify_day_before(bot: Bot):
         print(time)
         if time[0] == month and time[1] == day and time[2] == hour and time[3] == minute:
             await bot.send_message(chat_id=user[0],
-                                   text='notif-day')
+                                   text=lexicon('notif-day'))
 
 
 async def notify_hour_before(bot: Bot):
@@ -52,4 +54,4 @@ async def notify_hour_before(bot: Bot):
         print(time)
         if time[0] == month and time[1] == day and time[2] == hour and time[3] == minute:
             await bot.send_message(chat_id=user[0],
-                                   text='notif-hour')
+                                   text=lexicon('notif-hour'))
