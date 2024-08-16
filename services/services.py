@@ -1,6 +1,7 @@
 from pandas.plotting import table
 from select import select
 
+from database import window
 from database.crud import *
 from aiogram import Bot
 import random
@@ -19,7 +20,7 @@ async def notify_day_before(bot: Bot):
     minute = dt.minute
 
     signed_users = read(table='Users',
-                        columns='user_id',
+                        columns='user_id, window',
                         signed=1)
 
     for user in signed_users:
@@ -27,10 +28,10 @@ async def notify_day_before(bot: Bot):
                     columns='month, day, hour, minute',
                     by_user=user[0],
                     fetch=1)
-        print(time)
         if time[0] == month and time[1] == day and time[2] == hour and time[3] == minute:
             await bot.send_message(chat_id=user[0],
-                                   text=lexicon('notif-day'))
+                                   text=lexicon('notif-day').format(time=f'{time[2]}:{str(time[3]).zfill(2)}',
+                                                                    window=user[1]))
 
 
 async def notify_hour_before(bot: Bot):
@@ -43,7 +44,7 @@ async def notify_hour_before(bot: Bot):
     minute = dt.minute
 
     signed_users = read(table='Users',
-                        columns='user_id',
+                        columns='user_id, window',
                         signed=1)
 
     for user in signed_users:
@@ -51,7 +52,7 @@ async def notify_hour_before(bot: Bot):
                     columns='month, day, hour, minute',
                     by_user=user[0],
                     fetch=1)
-        print(time)
         if time[0] == month and time[1] == day and time[2] == hour and time[3] == minute:
             await bot.send_message(chat_id=user[0],
-                                   text=lexicon('notif-hour'))
+                                   text=lexicon('notif-hour').format(time=f'{time[2]}:{str(time[3]).zfill(2)}',
+                                                                    window=user[1]))

@@ -9,7 +9,7 @@ from keyboards.commands_menu import set_commands_menu
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 from services import setup_logger
-from services.services import notify_day_before
+from services.services import notify_day_before, notify_hour_before
 
 
 async def main() -> None:
@@ -26,7 +26,7 @@ async def main() -> None:
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
     scheduler.start()
 
-    # scheduler.add_job(update_counter, 'cron', hour='00', minute='00')
+    scheduler.add_job(notify_hour_before, 'cron', hour='8-17', minute='*/5', args=[bot])
     scheduler.add_job(notify_day_before, 'cron', hour='9-18', minute='*/5', args=[bot])
 
     await set_commands_menu(bot)
