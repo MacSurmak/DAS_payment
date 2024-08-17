@@ -8,6 +8,7 @@ from config_data import config
 from handlers import commands, messages, admin
 from keyboards.commands_menu import set_commands_menu
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from middlewares.middlewares import MessageThrottlingMiddleware
 
 from services import setup_logger
 from services.services import notify_day_before, notify_hour_before
@@ -23,6 +24,8 @@ async def main() -> None:
     )
 
     dp: Dispatcher = Dispatcher(storage=storage)
+
+    dp.message.middleware.register(MessageThrottlingMiddleware(storage=storage))
 
     dp.include_router(admin.router)
     dp.include_router(commands.router)
