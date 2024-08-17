@@ -10,8 +10,17 @@ class TgBot:
 
 
 @dataclass
+class Redis:
+    user: str
+    password: str
+    host: str
+    port: str
+
+
+@dataclass
 class Config:
     bot: TgBot
+    redis: Redis
 
 
 def load_config(path: str | None) -> Config:
@@ -21,4 +30,8 @@ def load_config(path: str | None) -> Config:
 
     return Config(bot=TgBot(token=env('BOT_TOKEN'),
                             admin_ids=list(map(int, env.list('ADMIN_IDS'))),
-                            hash=env('ADMIN_PASSWORD')))
+                            hash=env('ADMIN_PASSWORD')),
+                  redis=Redis(user=env('REDIS_USER'),
+                              password=env('REDIS_USER_PASSWORD'),
+                              host=env('REDIS_HOST'),
+                              port=env('REDIS_PORT')))

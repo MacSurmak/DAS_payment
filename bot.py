@@ -2,6 +2,7 @@ import asyncio
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
+from aiogram.fsm.storage.redis import RedisStorage
 
 from config_data import config
 from handlers import commands, messages, admin
@@ -17,7 +18,11 @@ async def main() -> None:
     bot: Bot = Bot(token=config.bot.token,
                    default=DefaultBotProperties(parse_mode='HTML'))
 
-    dp: Dispatcher = Dispatcher()
+    storage: RedisStorage = RedisStorage.from_url(
+        f'redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/0'
+    )
+
+    dp: Dispatcher = Dispatcher(storage=storage)
 
     dp.include_router(admin.router)
     dp.include_router(commands.router)
