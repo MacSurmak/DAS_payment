@@ -300,9 +300,9 @@ async def day(callback: CallbackQuery):
                          f'day={int(timestamp[1])}, '
                          f'hour={int(timestamp[2])}, '
                          f'minute={int(timestamp[3])}')
-            await callback.message.edit_text(text=lexicon('signed').format(date=f'{timestamp[1]} '
-                                                                                f'{lexicon(timestamp[0]).split(' ')[0]}',
-                                                                           time=f'{timestamp[2]}:{timestamp[3]}',
+            await callback.message.edit_text(text=lexicon('signed').format(date=f"{timestamp[1]} "
+                                                                                f"{lexicon(timestamp[0]).split(' ')[0]}",
+                                                                           time=f"{timestamp[2]}:{timestamp[3]}",
                                                                            window=window,
                                                                            weekday=read(table='Timetable',
                                                                                         columns='weekday',
@@ -320,9 +320,9 @@ async def other(message: Message):
                      columns='month, day, hour, minute',
                      by_user = message.from_user.id,
                      fetch=1)
-    await message.answer(text=lexicon('signed2').format(date=f'{timestamp[1]} '
-                                                             f'{lexicon(str(timestamp[0])).split(' ')[0]}',
-                                                        time=f'{timestamp[2]}:{timestamp[3]}',
+    await message.answer(text=lexicon('signed2').format(date=f"{timestamp[1]} "
+                                                             f"{lexicon(str(timestamp[0])).split(' ')[0]}",
+                                                        time=f"{timestamp[2]}:{timestamp[3]}",
                                                         window=window,
                                                         weekday=read(table='Timetable',
                                                                      columns='weekday',

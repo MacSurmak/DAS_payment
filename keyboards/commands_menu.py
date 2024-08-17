@@ -134,8 +134,8 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
         else:
             sym = '✖'
 
-        buttons_times.append(InlineKeyboardButton(text=f'{hour}:{minute if minute > 9 else f"0{minute}"}{sym}',
-                                                  callback_data=f'time_{month}:{day}:{hour}:{minute if minute > 9 else f"0{minute}"}'))
+        buttons_times.append(InlineKeyboardButton(text=f"{hour}:{minute if minute > 9 else f'0{minute}'}{sym}",
+                                                  callback_data=f"time_{month}:{day}:{hour}:{minute if minute > 9 else f'0{minute}'}"))
 
     kb_builder.row(*buttons_times, width=3)
 
