@@ -5,7 +5,7 @@ networks:
     driver: bridge
 
 
-servises:
+services:
 
   redis:
     container_name: redis
