@@ -19,7 +19,8 @@ degree TEXT,
 year INTEGER,
 window INTEGER,
 signed INTEGER DEFAULT '0',
-admin INTEGER DEFAULT '0'
+admin INTEGER DEFAULT '0',
+ready INTEGER DEFAULT '0'
 )
 ''')
 

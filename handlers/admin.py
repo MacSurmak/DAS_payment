@@ -17,7 +17,7 @@ from aiogram.types import Message, CallbackQuery, FSInputFile
 from database import last_day, timestamp
 from database.crud import *
 from filters.filters import IsRegistered, NoData, IsSigned, IsAdmin
-from keyboards.commands_menu import yesno_markup, calendar_markup
+from keyboards.commands_menu import yesno_markup, calendar_markup, calendar_markup_admin
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='admin-router')
@@ -168,3 +168,37 @@ async def process_table_command(message: Message):
     await message.answer_document(FSInputFile(f"{filename}.xlsx"))
     os.remove(f"{filename}.xlsx")
 
+
+@router.message(Command('open'))
+async def process_open_command(message: Message):
+    await message.answer(text=lexicon('/open'), reply_markup=calendar_markup_admin(datetime.today().month))
+
+
+@router.callback_query(lambda callback: callback.data == 'admin_calendar_back')
+async def aug(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(8))
+
+
+@router.callback_query(lambda callback: callback.data == 'admin_calendar_next')
+async def sep(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(9))
+
+
+@router.callback_query(lambda callback: callback.data.split('_')[0] == 'open')
+async def day(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    update(table='Lastday',
+           month=callback.data.split('_')[2].split('-')[1],
+           day=callback.data.split('_')[2].split('-')[0],
+           where='id=1')
+    await callback.message.edit_text(text=lexicon('extended').format(date=f'{str(callback.data.split('_')[2].split('-')[0]).zfill(2)}.'
+                                                                          f'{str(callback.data.split('_')[2].split('-')[1]).zfill(2)})',
+                                     reply_markup=None))

@@ -8,6 +8,7 @@ from aiogram import F
 from aiogram.filters import Command, CommandStart
 from aiogram.filters.callback_data import CallbackData
 from aiogram.types import Message, CallbackQuery
+from dateutil.rrule import weekday
 from pandas.plotting import table
 
 from database import window
@@ -68,7 +69,7 @@ async def process_adding_data(message: Message):
                              reply_markup=None)
 
 
-@router.callback_query(lambda callback: callback.data == '_no')
+@router.callback_query(lambda callback: callback.data == '_no', NoData())
 async def no(callback: CallbackQuery):
     """
     :param callback: Telegram callback
@@ -82,7 +83,7 @@ async def no(callback: CallbackQuery):
                                      reply_markup=None)
 
 
-@router.callback_query(lambda callback: callback.data == '_yes')
+@router.callback_query(lambda callback: callback.data == '_yes', NoData())
 async def yes(callback: CallbackQuery):
     """
     :param callback: Telegram callback
@@ -156,15 +157,73 @@ async def aug(callback: CallbackQuery):
     """
     :param callback: Telegram callback
     """
+    update(table='Users',
+           year=callback.data.split('_')[0],
+           where=f'user_id={callback.message.chat.id}')
+    data = read(table='Users',
+                columns='name, surname, patronymic, faculty, degree, year',
+                user_id=callback.message.chat.id,
+                fetch=1)
+    await callback.message.edit_text(text=lexicon('confirm-data').format(name=data[0],
+                                                                         surname=data[1],
+                                                                         patronymic=data[2],
+                                                                         faculty=data[3],
+                                                                         degree=data[4],
+                                                                         year=data[5]),
+                                     reply_markup=yesno_markup())
+
+
+@router.callback_query(lambda callback: callback.data == '_no', ~NoData(), ~IsSigned())
+async def no(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    lengths = {
+        'Бакалавриат': 4,
+        'Магистратура': 2,
+        'Специалитет': 6,
+    }
+    degree = read(table='Users',
+                  columns='degree',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
+    update(table='Users',
+           year=None,
+           where=f'user_id={callback.message.chat.id}')
+    await callback.message.edit_text(text=lexicon('accepted'),
+                                     reply_markup=year_markup(length=lengths[degree]))
+
+
+@router.callback_query(lambda callback: callback.data == '_yes', ~NoData(), ~IsSigned())
+async def yes(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    update(table='Users',
+           ready=1,
+           where=f'user_id={callback.message.chat.id}')
     window = read(table='Users',
                   columns='window',
                   user_id=callback.message.chat.id,
                   fetch=1)[0]
-    update(table='Users',
-           year=callback.data.split('_')[0],
-           where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(datetime.today().month))
+
+
+# @router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
+# async def aug(callback: CallbackQuery):
+#     """
+#     :param callback: Telegram callback
+#     """
+#     window = read(table='Users',
+#                   columns='window',
+#                   user_id=callback.message.chat.id,
+#                   fetch=1)[0]
+#     update(table='Users',
+#            year=callback.data.split('_')[0],
+#            where=f'user_id={callback.message.chat.id}')
+#     await callback.message.edit_text(text=lexicon('ready').format(window=window),
+#                                      reply_markup=calendar_markup(datetime.today().month))
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
@@ -252,7 +311,12 @@ async def day(callback: CallbackQuery):
             await callback.message.edit_text(text=lexicon('signed').format(date=f'{timestamp[1]} '
                                                                                 f'{lexicon(timestamp[0]).split(' ')[0]}',
                                                                            time=f'{timestamp[2]}:{timestamp[3]}',
-                                                                           window=window), reply_markup=None)
+                                                                           window=window,
+                                                                           weekday=read(table='Timetable',
+                                                                                        columns='weekday',
+                                                                                        by_user=callback.message.chat.id,
+                                                                                        fetch=1)[0]),
+                                             reply_markup=None)
 
 
 @router.message(IsSigned())
@@ -267,7 +331,36 @@ async def other(message: Message):
     await message.answer(text=lexicon('signed2').format(date=f'{timestamp[1]} '
                                                              f'{lexicon(str(timestamp[0])).split(' ')[0]}',
                                                         time=f'{timestamp[2]}:{timestamp[3]}',
-                                                        window=window), reply_markup=None)
+                                                        window=window,
+                                                        weekday=read(table='Timetable',
+                                                                     columns='weekday',
+                                                                     by_user=message.chat.id,
+                                                                     fetch=1)[0]),
+                         reply_markup=None)
+
+
+@router.callback_query(lambda callback: callback.data == '_no', IsSigned())
+async def no(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    await callback.message.edit_text(text=lexicon('not-cancelled'),
+                                     reply_markup=None)
+
+
+@router.callback_query(lambda callback: callback.data == '_yes', IsSigned())
+async def yes(callback: CallbackQuery):
+    """
+    :param callback: Telegram callback
+    """
+    update(table='Users',
+           signed=0,
+           where=f'user_id = {callback.message.chat.id}')
+    update(table='Timetable',
+           signed=0,
+           by_user=None,
+           where=f'by_user = {callback.message.chat.id}')
+    await callback.message.edit_text(text=lexicon('cancelled'))
 
 
 @router.message()

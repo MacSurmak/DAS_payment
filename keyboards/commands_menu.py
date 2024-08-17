@@ -144,3 +144,51 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
                                         callback_data=f'back_to_calendar_{month}'))
     return kb_builder.as_markup(resize_keyboard=True)
+
+
+def calendar_markup_admin(month) -> InlineKeyboardMarkup:
+    kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
+    kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
+    buttons_weekdays: list[InlineKeyboardButton] = [
+        InlineKeyboardButton(text=day, callback_data='_empty') for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+    ]
+    kb_builder.row(*buttons_weekdays, width=7)
+
+    obj = calendar.Calendar()
+    days = obj.itermonthdates(2024, month)
+
+    result = read(table='Lastday',
+                  columns='month, day',
+                  fetch=1)
+
+    last_day = date(year=2024, month=result[0], day=result[1])
+
+    buttons_days: list[InlineKeyboardButton] = []
+    for day in days:
+        if day.month == month:
+            if day > last_day or day < date.today():
+                sym = ''
+                code = 'no'
+            elif last_day >= day >= date.today() and read(table='Timetable',
+                                                          columns='signed',
+                                                          month=day.month,
+                                                          day=day.day):
+                sym = '✅'
+                code = 'yes'
+            else:
+                sym = ''
+                code = 'no'
+            buttons_days.append(InlineKeyboardButton(text=str(day.day) + sym, callback_data=f'open_{code}_{day.day}-{day.month}'))
+        else:
+            buttons_days.append(InlineKeyboardButton(text=' ', callback_data=f'empty_{day}-{month}'))
+
+    kb_builder.row(*buttons_days, width=7)
+
+    if month == datetime.today().month:
+        kb_builder.row(InlineKeyboardButton(text=lexicon('next'),
+                                            callback_data=f'admin_calendar_next'))
+    else:
+        kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
+                                            callback_data=f'admin_calendar_back'))
+
+    return kb_builder.as_markup(resize_keyboard=True)
