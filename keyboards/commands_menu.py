@@ -114,7 +114,7 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     month = int(timestamp.split('-')[1])
 
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(InlineKeyboardButton(text=f'{day} {lexicon(f'{month}')}', callback_data='_empty'))
+    kb_builder.row(InlineKeyboardButton(text=f"{day} {lexicon(f'{month}')}", callback_data='_empty'))
 
     times = read(table='Timetable',
                  columns='hour, minute, signed',
