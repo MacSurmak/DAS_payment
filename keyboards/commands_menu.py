@@ -1,16 +1,14 @@
 import calendar
 from datetime import datetime, date
 
-from aiogram_calendar import SimpleCalendar
 from aiogram import Bot
 from aiogram.types import BotCommand
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from database.crud import *
-from lexicon.lexicon import lexicon, LEXICON
-
 from lexicon.lexicon import LEXICON_COMMANDS
+from lexicon.lexicon import lexicon
 
 
 async def set_commands_menu(bot: Bot):

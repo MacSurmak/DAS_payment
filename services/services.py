@@ -1,12 +1,8 @@
-from pandas.plotting import table
-from select import select
-
-from database import window
-from database.crud import *
-from aiogram import Bot
-import random
 from datetime import datetime
 
+from aiogram import Bot
+
+from database.crud import *
 from lexicon.lexicon import lexicon
 
 

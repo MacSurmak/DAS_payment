@@ -1,12 +1,11 @@
-import re
-import random
 import hashlib
-from config_data import config
 from datetime import datetime
 
-from aiogram import Router, Bot
+from aiogram import Router
 from aiogram.filters import Command, CommandStart
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message
+
+from config_data import config
 from database.crud import *
 from filters.filters import IsRegistered, NoData, IsSigned, NoName, IsReady
 from keyboards.commands_menu import yesno_markup, calendar_markup

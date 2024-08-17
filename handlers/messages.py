@@ -1,15 +1,7 @@
-import re
-import random
-from datetime import datetime, timedelta
+from datetime import datetime
 
-from aiogram_calendar import SimpleCalendar, SimpleCalendarCallback, DialogCalendar, DialogCalendarCallback
-from aiogram import Router, Bot
-from aiogram import F
-from aiogram.filters import Command, CommandStart
-from aiogram.filters.callback_data import CallbackData
+from aiogram import Router
 from aiogram.types import Message, CallbackQuery
-from dateutil.rrule import weekday
-from pandas.plotting import table
 
 from database import window
 from database.crud import *

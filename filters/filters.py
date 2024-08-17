@@ -1,5 +1,6 @@
 from aiogram.filters import BaseFilter
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import Message
+
 from database.crud import *
 
 

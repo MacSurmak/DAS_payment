@@ -1,23 +1,14 @@
 import os
-import re
-import random
-import hashlib
-import pandas as pd
-from msilib.schema import tables
-
-from select import select
-
-from config_data import config
 from datetime import datetime, date, timedelta
 
-from aiogram import Router, Bot
-from aiogram.filters import Command, CommandStart
+import pandas as pd
+from aiogram import Router
+from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, FSInputFile
 
-from database import last_day, timestamp
 from database.crud import *
-from filters.filters import IsRegistered, NoData, IsSigned, IsAdmin
-from keyboards.commands_menu import yesno_markup, calendar_markup, calendar_markup_admin
+from filters.filters import IsAdmin
+from keyboards.commands_menu import calendar_markup_admin
 from lexicon.lexicon import lexicon
 
 router: Router = Router(name='admin-router')
@@ -88,7 +79,7 @@ async def process_table_command(message: Message):
                 time3 = []
                 for i in day:
                     hour = i[3]
-                    i[4]+10
+                    minute = i[4]+10
                     if minute >= 60:
                         minute -= 60
                         hour += 1

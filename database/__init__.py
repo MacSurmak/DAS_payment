@@ -1,6 +1,5 @@
-import sqlite3
-import calendar
 import datetime
+import sqlite3
 from sqlite3 import IntegrityError
 
 # Устанавливаем соединение с базой данных
