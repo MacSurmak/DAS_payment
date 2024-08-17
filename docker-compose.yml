@@ -51,6 +51,6 @@ services:
       stdin_open: true
 
   bot:
-    build: /
+    build: ./
     depends_on:
       - redis
