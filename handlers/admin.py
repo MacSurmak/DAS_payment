@@ -191,5 +191,5 @@ async def day(callback: CallbackQuery):
            day=callback.data.split('_')[2].split('-')[0],
            where='id=1')
     await callback.message.edit_text(text=lexicon('extended').format(date=f"{str(callback.data.split('_')[2].split('-')[0]).zfill(2)}."
-                                                                          f"{str(callback.data.split('_')[2].split('-')[1]).zfill(2)})",
+                                                                          f"{str(callback.data.split('_')[2].split('-')[1]).zfill(2)}",
                                      reply_markup=None))
