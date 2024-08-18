@@ -96,6 +96,14 @@ async def process_start_command(message: Message):
     #                                                                   fetch=1)[0]))
 
 
+@router.message(Command('help'))
+async def process_help_command(message: Message):
+    """
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('/help'))
+
+
 @router.message(Command('admin'))
 async def process_admin_command(message: Message):
     """
