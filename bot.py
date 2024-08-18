@@ -3,6 +3,7 @@ import asyncio
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 
 from config_data import config
 from handlers import commands, messages, admin
@@ -26,6 +27,7 @@ async def main() -> None:
     dp: Dispatcher = Dispatcher(storage=storage)
 
     dp.message.middleware.register(MessageThrottlingMiddleware(storage=storage))
+    dp.callback_query.middleware(CallbackAnswerMiddleware())
 
     dp.include_router(admin.router)
     dp.include_router(commands.router)

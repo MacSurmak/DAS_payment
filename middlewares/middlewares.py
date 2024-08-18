@@ -14,7 +14,7 @@ class MessageThrottlingMiddleware(BaseMiddleware):
                        event: Message,
                        data: Dict[str, Any]) -> Any:
 
-        user = event.from_user.id
+        user = str(event.from_user.id)
         check_user = await self.storage.redis.get(name=user)
 
         if check_user:
