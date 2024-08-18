@@ -20,13 +20,16 @@ async def main() -> None:
     bot: Bot = Bot(token=config.bot.token,
                    default=DefaultBotProperties(parse_mode='HTML'))
 
-    storage: RedisStorage = RedisStorage.from_url(
+    bot_storage: RedisStorage = RedisStorage.from_url(
         f'redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/0'
     )
+    middleware_storage: RedisStorage = RedisStorage.from_url(
+        f'redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/1'
+    )
 
-    dp: Dispatcher = Dispatcher(storage=storage)
+    dp: Dispatcher = Dispatcher(storage=bot_storage)
 
-    dp.message.middleware.register(MessageThrottlingMiddleware(storage=storage))
+    dp.message.middleware.register(MessageThrottlingMiddleware(storage=middleware_storage))
     dp.callback_query.middleware(CallbackAnswerMiddleware())
 
     dp.include_router(admin.router)

@@ -37,7 +37,7 @@ async def process_registration(message: Message, state: FSMContext):
     await state.set_state(FSMRegistration.name)
 
 
-@router.message(StateFilter(FSMRegistration.name))
+@router.message(IsRegistered(), StateFilter(FSMRegistration.name))
 async def process_adding_data(message: Message, state: FSMContext):
     """
     :param message: Telegram message
