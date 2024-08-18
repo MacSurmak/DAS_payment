@@ -364,7 +364,7 @@ async def day(callback: CallbackQuery, state: FSMContext):
                          f'day={int(timestamp[1])}, '
                          f'hour={int(timestamp[2])}, '
                          f'minute={int(timestamp[3])}')
-            await callback.message.edit_reply_markup(reply_markup=None)
+            await callback.message.delete()
             await callback.message.answer(text=lexicon('signed').format(date=f"{timestamp[1]} "
                                                                                 f"{lexicon(timestamp[0]).split(' ')[0]}",
                                                                         time=f"{timestamp[2]}:{timestamp[3]}",
