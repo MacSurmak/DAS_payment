@@ -62,11 +62,14 @@ try:
     last_day = datetime.datetime(2024, 9, 30)
 
     while today <= last_day:
-        if today.weekday() in [0, 2, 4]:
+        if today.weekday() in [0, 2, 4] or today.month == 8:
 
             time1 = today + datetime.timedelta(hours=9, minutes=20)
-            time2 = today + datetime.timedelta(hours=12, minutes=35)
+            time2 = today + datetime.timedelta(hours=10, minutes=50)
+            time3 = today + datetime.timedelta(hours=11, minutes=5)
+            time4 = today + datetime.timedelta(hours=12, minutes=35)
             window = 1
+
             while time1 <= time2:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                 cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
@@ -79,8 +82,23 @@ try:
                 else:
                     window = 1
 
+            while time3 <= time4:
+                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time3.hour,
+                                time3.minute, week[today.weekday()], window,))
+                time3 += datetime.timedelta(minutes=5)
+                if window < 3:
+                    window += 1
+                else:
+                    window = 1
+
             time1 = today + datetime.timedelta(hours=14, minutes=10)
-            time2 = today + datetime.timedelta(hours=17, minutes=20)
+            time2 = today + datetime.timedelta(hours=16, minutes=35)
+            time3 = today + datetime.timedelta(hours=16, minutes=50)
+            time4 = today + datetime.timedelta(hours=17, minutes=20)
+
             while time1 <= time2:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                 cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
@@ -91,17 +109,43 @@ try:
                 else:
                     window = 1
 
+            while time3 <= time4:
+                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], window))
+                time3 += datetime.timedelta(minutes=5)
+                if window < 3:
+                    window += 1
+                else:
+                    window = 1
+
         elif today.weekday() in [1, 3]:
 
-            time1 = today + datetime.timedelta(hours=14, minutes=10)
-            time2 = today + datetime.timedelta(hours=17, minutes=20)
+            time1 = today + datetime.timedelta(hours=9, minutes=20)
+            time2 = today + datetime.timedelta(hours=10, minutes=50)
+            time3 = today + datetime.timedelta(hours=11, minutes=5)
+            time4 = today + datetime.timedelta(hours=12, minutes=35)
             window = 1
+
             while time1 <= time2:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute(
-                    'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                    (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], window))
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time1.hour,
+                                time1.minute, week[today.weekday()], window,))
                 time1 += datetime.timedelta(minutes=5)
+                if window < 3:
+                    window += 1
+                else:
+                    window = 1
+
+            while time3 <= time4:
+                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time3.hour,
+                                time3.minute, week[today.weekday()], window,))
+                time3 += datetime.timedelta(minutes=5)
                 if window < 3:
                     window += 1
                 else:
