@@ -215,8 +215,9 @@ async def yes(callback: CallbackQuery, state: FSMContext):
            year=data['year'],
            window=window,
            where=f'user_id={callback.message.chat.id}')
-    await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                     reply_markup=calendar_markup(datetime.today().month))
+    await callback.message.delete()
+    await callback.message.answer(text=lexicon('ready').format(window=window),
+                                  reply_markup=calendar_markup(datetime.today().month))
     await state.set_state(FSMRegistration.sign)
 
 
