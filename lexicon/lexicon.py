@@ -88,7 +88,7 @@ LEXICON: dict[str, str] = {
     'extended': 'Запись открыта до {date}!',
 
     'confirm-data': 'Фамилия: {surname}\nИмя: {name}\nОтчество: {patronymic}\n'
-                    'Факультет: {faculty}\nПрограмма:{degree}\nКурс:{year}\n\nВсё верно?',
+                    'Факультет: {faculty}\nПрограмма: {degree}\nКурс: {year}\n\nВсё верно?',
 
     # User markups
     '_no': 'Нет',
