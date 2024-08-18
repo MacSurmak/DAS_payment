@@ -73,10 +73,27 @@ async def process_start_command(message: Message):
     """
     :param message: Telegram message
     """
-    await message.answer(text=lexicon('/start-data').format(name=read(table='Users',
-                                                                      columns='name',
-                                                                      user_id=message.chat.id,
-                                                                      fetch=1)[0]))
+    timestamp = read(table = 'Timetable',
+                     columns='month, day, hour, minute',
+                     by_user = message.from_user.id,
+                     fetch=1)
+    window = read(table='Users',
+                  columns='window',
+                  user_id=message.chat.id,
+                  fetch=1)[0]
+    await message.answer(text=lexicon('signed2').format(date=f"{timestamp[1]} "
+                                                             f"{lexicon(str(timestamp[0])).split(' ')[0]}",
+                                                        time=f"{timestamp[2]}:{timestamp[3]}",
+                                                        window=window,
+                                                        weekday=read(table='Timetable',
+                                                                     columns='weekday',
+                                                                     by_user=message.chat.id,
+                                                                     fetch=1)[0]),
+                         reply_markup=None)
+    # await message.answer(text=lexicon('/start-data').format(name=read(table='Users',
+    #                                                                   columns='name',
+    #                                                                   user_id=message.chat.id,
+    #                                                                   fetch=1)[0]))
 
 
 @router.message(Command('admin'))
