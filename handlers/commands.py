@@ -2,7 +2,9 @@ import hashlib
 from datetime import datetime
 
 from aiogram import Router
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, StateFilter
+from aiogram.fsm.context import FSMContext
+from aiogram.fsm.state import StatesGroup, State, default_state
 from aiogram.types import Message
 
 from config_data import config
@@ -14,18 +16,30 @@ from lexicon.lexicon import lexicon
 router: Router = Router(name='commands-router')
 
 
+class FSMRegistration(StatesGroup):
+    name = State()
+    faculty = State()
+    degree = State()
+    year = State()
+    registered = State()
+    sign = State()
+    cancel = State()
+
+
 @router.message(CommandStart(), ~IsRegistered())
-async def process_start_command(message: Message):
+async def process_start_command(message: Message, state: FSMContext):
     """
     :param message: Telegram message
+    :param state: FSM state
     """
     user_id = message.from_user.id
     create(table='Users',
            user_id=user_id)
     await message.answer(text=lexicon('/start'))
+    await state.set_state(FSMRegistration.name)
 
 
-@router.message(CommandStart(), IsRegistered(), NoName())
+@router.message(CommandStart(), StateFilter(FSMRegistration.name))
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
@@ -33,7 +47,7 @@ async def process_start_command(message: Message):
     await message.answer(text=lexicon('/start-registered'))
 
 
-@router.message(CommandStart(), IsRegistered(), NoData())
+@router.message(CommandStart(), ~StateFilter(default_state, FSMRegistration.name))
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
@@ -41,7 +55,7 @@ async def process_start_command(message: Message):
     await message.answer(text=lexicon('/register'))
 
 
-@router.message(CommandStart(), IsRegistered(), ~NoData(), ~IsSigned(), IsReady())
+@router.message(CommandStart(), StateFilter(FSMRegistration.sign))
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
@@ -85,9 +99,10 @@ async def process_admin_command(message: Message):
 
 
 @router.message(Command('cancel'), IsSigned())
-async def process_cancel_command(message: Message):
+async def process_cancel_command(message: Message, state: FSMContext):
     """
     :param message: Telegram message
+    :param state: FSM state
     """
     time = read(table='Timetable',
                 columns='month, day, hour, minute',
@@ -100,3 +115,4 @@ async def process_cancel_command(message: Message):
                                                                      by_user=message.chat.id,
                                                                      fetch=1)[0]),
                          reply_markup=yesno_markup())
+    await state.set_state(FSMRegistration.cancel)

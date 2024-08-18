@@ -21,7 +21,8 @@ class FSMRegistration(StatesGroup):
     faculty = State()
     degree = State()
     year = State()
-    registered = State()
+    sign = State()
+    cancel = State()
 
 
 @router.message(~IsRegistered())
@@ -37,12 +38,13 @@ async def process_registration(message: Message, state: FSMContext):
     await state.set_state(FSMRegistration.name)
 
 
-@router.message(IsRegistered(), StateFilter(default_state))
+@router.message(IsRegistered(), StateFilter(FSMRegistration.name))
 async def process_adding_data(message: Message, state: FSMContext):
     """
     :param message: Telegram message
     :param state: FSM state
     """
+
     if message.text:
         if message.text.replace(' ', '').isalpha():
             text = message.text.split()
@@ -248,7 +250,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
     #               fetch=1)[0]
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(datetime.today().month))
-    await state.clear()
+    await state.set_state(FSMRegistration.sign)
 
 
 # @router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
@@ -315,9 +317,10 @@ async def day(callback: CallbackQuery):
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'time')
-async def day(callback: CallbackQuery):
+async def day(callback: CallbackQuery, state: FSMContext):
     """
     :param callback: Telegram callback
+    :param state: FSM state
     """
     if read(table='Users',
             columns='signed',
@@ -358,6 +361,7 @@ async def day(callback: CallbackQuery):
                                                                                         by_user=callback.message.chat.id,
                                                                                         fetch=1)[0]),
                                              reply_markup=None)
+            await state.clear()
 
 
 @router.message(IsSigned())
@@ -369,6 +373,10 @@ async def other(message: Message):
                      columns='month, day, hour, minute',
                      by_user = message.from_user.id,
                      fetch=1)
+    window = read(table='Users',
+                  columns='window',
+                  user_id=message.chat.id,
+                  fetch=1)[0]
     await message.answer(text=lexicon('signed2').format(date=f"{timestamp[1]} "
                                                              f"{lexicon(str(timestamp[0])).split(' ')[0]}",
                                                         time=f"{timestamp[2]}:{timestamp[3]}",
@@ -380,19 +388,23 @@ async def other(message: Message):
                          reply_markup=None)
 
 
-@router.callback_query(lambda callback: callback.data == '_no', IsSigned())
-async def no(callback: CallbackQuery):
+@router.callback_query(lambda callback: callback.data == '_no', StateFilter(FSMRegistration.cancel))
+async def no(callback: CallbackQuery, state: FSMContext):
     """
     :param callback: Telegram callback
+    :param state: FSM state
     """
     await callback.message.edit_text(text=lexicon('not-cancelled'),
                                      reply_markup=None)
+    await state.clear()
 
 
-@router.callback_query(lambda callback: callback.data == '_yes', IsSigned())
-async def yes(callback: CallbackQuery):
+
+@router.callback_query(lambda callback: callback.data == '_yes', StateFilter(FSMRegistration.cancel))
+async def yes(callback: CallbackQuery, state: FSMContext):
     """
     :param callback: Telegram callback
+    :param state: FSM state
     """
     update(table='Users',
            signed=0,
@@ -402,6 +414,8 @@ async def yes(callback: CallbackQuery):
            by_user=None,
            where=f'by_user = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('cancelled'))
+    await state.clear()
+
 
 
 @router.message()
