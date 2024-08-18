@@ -18,6 +18,7 @@ router: Router = Router(name='messages-router')
 
 class FSMRegistration(StatesGroup):
     name = State()
+    name_confirmation = State()
     faculty = State()
     degree = State()
     year = State()
@@ -58,6 +59,7 @@ async def process_adding_data(message: Message, state: FSMContext):
                 await state.update_data(name=name,
                                         surname=surname,
                                         patronymic=patronymic)
+                await state.set_state(FSMRegistration.name_confirmation)
                 # update(table='Users',
                 #        name=name,
                 #        surname=surname,
@@ -80,10 +82,11 @@ async def process_adding_data(message: Message, state: FSMContext):
                              reply_markup=None)
 
 
-@router.callback_query(lambda callback: callback.data == '_no', StateFilter(FSMRegistration.name))
-async def no(callback: CallbackQuery):
+@router.callback_query(lambda callback: callback.data == '_no', StateFilter(FSMRegistration.name_confirmation))
+async def no(callback: CallbackQuery, state: FSMContext):
     """
     :param callback: Telegram callback
+    :param state: FSM state
     """
     # update(table='Users',
     #        name=None,
@@ -92,9 +95,10 @@ async def no(callback: CallbackQuery):
     #        where=f'user_id = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('repeat'),
                                      reply_markup=None)
+    await state.set_state(FSMRegistration.name)
 
 
-@router.callback_query(lambda callback: callback.data == '_yes', StateFilter(FSMRegistration.name))
+@router.callback_query(lambda callback: callback.data == '_yes', StateFilter(FSMRegistration.name_confirmation))
 async def yes(callback: CallbackQuery, state: FSMContext):
     """
     :param callback: Telegram callback
