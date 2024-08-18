@@ -120,7 +120,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMRegistration.faculty)
 
 
-@router.message(StateFilter(FSMRegistration.name_confirmation))
+@router.message(~StateFilter(default_state, FSMRegistration.name, FSMRegistration.sign, FSMRegistration.cancel))
 async def name_not_confirmed(message: Message):
     """
     :param message: Telegram message
