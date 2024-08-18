@@ -9,7 +9,7 @@ from aiogram.types import Message
 
 from config_data import config
 from database.crud import *
-from filters.filters import IsRegistered, NoData, IsSigned, NoName, IsReady
+from filters.filters import IsRegistered, IsSigned
 from keyboards.commands_menu import yesno_markup, calendar_markup
 from lexicon.lexicon import lexicon
 
@@ -68,7 +68,7 @@ async def process_start_command(message: Message):
                          reply_markup=calendar_markup(datetime.today().month))
 
 
-@router.message(CommandStart(), IsRegistered(), ~NoData())
+@router.message(CommandStart(), IsRegistered(), StateFilter(default_state, FSMRegistration.cancel))
 async def process_start_command(message: Message):
     """
     :param message: Telegram message

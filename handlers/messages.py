@@ -6,9 +6,8 @@ from aiogram.types import Message, CallbackQuery
 
 from aiogram.filters.state import State, StatesGroup, StateFilter
 from aiogram.fsm.context import FSMContext
-from database import window
 from database.crud import *
-from filters.filters import IsRegistered, NoData, NoName, IsSigned
+from filters.filters import IsRegistered, IsSigned
 from keyboards.commands_menu import yesno_markup, degree_markup, year_markup, faculty_markup, calendar_markup, \
     day_markup
 from lexicon.lexicon import lexicon
@@ -60,11 +59,6 @@ async def process_adding_data(message: Message, state: FSMContext):
                                         surname=surname,
                                         patronymic=patronymic)
                 await state.set_state(FSMRegistration.name_confirmation)
-                # update(table='Users',
-                #        name=name,
-                #        surname=surname,
-                #        patronymic=patronymic,
-                #        where=f'user_id = {message.chat.id}')
                 await message.answer(
                     text=lexicon('name-confirmation').format(name=name, surname=surname, patronymic=patronymic),
                     reply_markup=yesno_markup())
@@ -88,11 +82,6 @@ async def no(callback: CallbackQuery, state: FSMContext):
     :param callback: Telegram callback
     :param state: FSM state
     """
-    # update(table='Users',
-    #        name=None,
-    #        surname=None,
-    #        patronymic=None,
-    #        where=f'user_id = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('repeat'),
                                      reply_markup=None)
     await state.set_state(FSMRegistration.name)
@@ -104,15 +93,6 @@ async def yes(callback: CallbackQuery, state: FSMContext):
     :param callback: Telegram callback
     :param state: FSM state
     """
-    # text = callback.message.text.split('\n')
-    # surname = text[0].split(' ')[1]
-    # name = text[1].split(' ')[1]
-    # patronymic = text[2].split(' ')[1]
-    # update(table='Users',
-    #        name=name,
-    #        surname=surname,
-    #        patronymic=patronymic,
-    #        where=f'user_id = {callback.message.chat.id}')
     data = await state.get_data()
     name = data['name']
     await callback.message.edit_text(text=lexicon('faculty').format(name=name),
@@ -149,10 +129,6 @@ async def faculty(callback: CallbackQuery, state: FSMContext):
     window = lexicon(faculty)
     await state.update_data(faculty=faculty,
                             window=window)
-    # update(table='Users',
-    #        faculty=faculty,
-    #        window=window,
-    #        where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=degree_markup())
     await state.set_state(FSMRegistration.degree)
@@ -181,9 +157,6 @@ async def degree(callback: CallbackQuery, state: FSMContext):
         'Магистратура': 2,
         'Специалитет': 6,
     }
-    # update(table='Users',
-    #        degree=degree,
-    #        where=f'user_id={callback.message.chat.id}')
     await state.update_data(degree=degree)
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=year_markup(length=lengths[degree]))
@@ -196,13 +169,6 @@ async def year(callback: CallbackQuery, state: FSMContext):
     :param callback: Telegram callback
     :param state: FSM state
     """
-    # update(table='Users',
-    #        year=callback.data.split('_')[0],
-    #        where=f'user_id={callback.message.chat.id}')
-    # data = read(table='Users',
-    #             columns='name, surname, patronymic, faculty, degree, year',
-    #             user_id=callback.message.chat.id,
-    #             fetch=1)
     await state.update_data(year=callback.data.split('_')[0])
     data = await state.get_data()
     await callback.message.edit_text(text=lexicon('confirm-data').format(name=data['name'],
@@ -227,13 +193,6 @@ async def no(callback: CallbackQuery, state: FSMContext):
     }
     data = await state.get_data()
     degree = data['degree']
-    # degree = read(table='Users',
-    #               columns='degree',
-    #               user_id=callback.message.chat.id,
-    #               fetch=1)[0]
-    # update(table='Users',
-    #        year=None,
-    #        where=f'user_id={callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('accepted'),
                                      reply_markup=year_markup(length=lengths[degree]))
 
@@ -256,29 +215,9 @@ async def yes(callback: CallbackQuery, state: FSMContext):
            year=data['year'],
            window=window,
            where=f'user_id={callback.message.chat.id}')
-    # window = read(table='Users',
-    #               columns='window',
-    #               user_id=callback.message.chat.id,
-    #               fetch=1)[0]
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
                                      reply_markup=calendar_markup(datetime.today().month))
     await state.set_state(FSMRegistration.sign)
-
-
-# @router.callback_query(lambda callback: callback.data.split('_')[1] == 'year')
-# async def aug(callback: CallbackQuery):
-#     """
-#     :param callback: Telegram callback
-#     """
-#     window = read(table='Users',
-#                   columns='window',
-#                   user_id=callback.message.chat.id,
-#                   fetch=1)[0]
-#     update(table='Users',
-#            year=callback.data.split('_')[0],
-#            where=f'user_id={callback.message.chat.id}')
-#     await callback.message.edit_text(text=lexicon('ready').format(window=window),
-#                                      reply_markup=calendar_markup(datetime.today().month))
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
