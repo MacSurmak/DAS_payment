@@ -120,13 +120,12 @@ async def yes(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMRegistration.faculty)
 
 
-    @router.message(~IsRegistered(), StateFilter(FSMRegistration.name_confirmation))
-    async def name_not_confirmed(message: Message, state: FSMContext):
-        """
-        :param message: Telegram message
-        :param state: FSM state
-        """
-        await message.answer(text=lexicon('/register'))
+@router.message(StateFilter(FSMRegistration.name_confirmation))
+async def name_not_confirmed(message: Message):
+    """
+    :param message: Telegram message
+    """
+    await message.answer(text=lexicon('/register'))
 
 
 @router.callback_query(lambda callback: callback.data == 'back_degree')
