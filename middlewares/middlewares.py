@@ -21,7 +21,7 @@ class MessageThrottlingMiddleware(BaseMiddleware):
         else:
             message = event.message
 
-        user = str(event.from_user.id)
+        user = str(message.from_user.id)
         check_user = await self.storage.redis.get(name=user)
 
         if check_user:
@@ -30,7 +30,7 @@ class MessageThrottlingMiddleware(BaseMiddleware):
                 return await handler(event, data)
             elif check_user == 2:
                 await self.storage.redis.set(name=user, value=3, ex=10)
-                return await event.answer(lexicon('throttling-warning'))
+                return await message.answer(lexicon('throttling-warning'))
             elif check_user == 3:
                 return
 
