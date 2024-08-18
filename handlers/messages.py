@@ -427,7 +427,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
            by_user=None,
            where=f'by_user = {callback.message.chat.id}')
     await callback.message.edit_text(text=lexicon('cancelled'))
-    await state.clear()
+    await state.set_state(FSMRegistration.sign)
 
 
 
