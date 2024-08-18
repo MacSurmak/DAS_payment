@@ -13,25 +13,20 @@ class MessageThrottlingMiddleware(BaseMiddleware):
 
     async def __call__(self,
                        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-                       event: Union[Message, CallbackQuery],
+                       event: Message,
                        data: Dict[str, Any]) -> Any:
 
-        if type(event) is Message:
-            message = event
-        else:
-            message = event.message
-
-        user = str(message.from_user.id)
+        user = str(event.from_user.id)
         check_user = await self.storage.redis.get(name=user)
 
         if check_user:
-            if check_user == 1:
+            if int(check_user.decode()) == 1:
                 await self.storage.redis.set(name=user, value=2, ex=3)
                 return await handler(event, data)
-            elif check_user == 2:
+            elif int(check_user.decode()) == 2:
                 await self.storage.redis.set(name=user, value=3, ex=10)
-                return await message.answer(lexicon('throttling-warning'))
-            elif check_user == 3:
+                return await event.answer(lexicon('throttling-warning'))
+            elif int(check_user.decode()) == 3:
                 return
 
         await self.storage.redis.set(name=user, value=1, ex=3)
