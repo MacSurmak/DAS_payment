@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from aiogram import Router
+from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery
 
 from aiogram.filters.state import State, StatesGroup, StateFilter
@@ -36,7 +37,7 @@ async def process_registration(message: Message, state: FSMContext):
     await state.set_state(FSMRegistration.name)
 
 
-@router.message(IsRegistered(), StateFilter(FSMRegistration.name))
+@router.message(IsRegistered(), StateFilter(default_state))
 async def process_adding_data(message: Message, state: FSMContext):
     """
     :param message: Telegram message
