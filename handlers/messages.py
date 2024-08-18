@@ -3,8 +3,7 @@ from datetime import datetime
 from aiogram import Router
 from aiogram.types import Message, CallbackQuery
 
-from aiogram.filters import StateFilter
-from aiogram.filters.state import State, StatesGroup
+from aiogram.filters.state import State, StatesGroup, StateFilter
 from aiogram.fsm.context import FSMContext
 from database import window
 from database.crud import *
