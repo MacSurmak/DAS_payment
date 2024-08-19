@@ -196,25 +196,25 @@ async def day(callback: CallbackQuery):
                                      reply_markup=None))
 
 
-    @router.message(Command('delete'))
-    async def delete_year(message: Message, bot: Bot):
+@router.message(Command('delete'))
+async def delete_year(message: Message, bot: Bot):
 
-        first = read(table='Users',
-             columns='user_id',
-             year=1,
-             signed=1)
-        users = read(table='Users',
-             columns='user_id')
+    first = read(table='Users',
+         columns='user_id',
+         year=1,
+         signed=1)
+    users = read(table='Users',
+         columns='user_id')
 
-        for user in users:
-            if user not in first:
-                update(table='Users',
-                       signed=0,
-                       where=f'user_id = {user[0]}')
-                update(table='Timetable',
-                       signed=0,
-                       by_user=None,
-                       where=f'by_user = {user[0]}')
-                await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
+    for user in users:
+        if user not in first:
+            update(table='Users',
+                   signed=0,
+                   where=f'user_id = {user[0]}')
+            update(table='Timetable',
+                   signed=0,
+                   by_user=None,
+                   where=f'by_user = {user[0]}')
+            await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
 
-        await message.answer(text=lexicon('/open'), reply_markup=calendar_markup_admin(datetime.today().month))
+    await message.answer(text=lexicon('/open'), reply_markup=calendar_markup_admin(datetime.today().month))
