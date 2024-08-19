@@ -55,7 +55,7 @@ async def process_start_command(message: Message):
     await message.answer(text=lexicon('/register'))
 
 
-@router.message(CommandStart(), StateFilter(FSMRegistration.sign))
+@router.message(CommandStart(), (StateFilter(FSMRegistration.sign) or ~IsSigned()))
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
@@ -68,7 +68,7 @@ async def process_start_command(message: Message):
                          reply_markup=calendar_markup(datetime.today().month))
 
 
-@router.message(CommandStart(), IsRegistered(), StateFilter(default_state, FSMRegistration.cancel))
+@router.message(CommandStart(), IsRegistered(), IsSigned())
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
@@ -90,10 +90,6 @@ async def process_start_command(message: Message):
                                                                      by_user=message.chat.id,
                                                                      fetch=1)[0]),
                          reply_markup=None)
-    # await message.answer(text=lexicon('/start-data').format(name=read(table='Users',
-    #                                                                   columns='name',
-    #                                                                   user_id=message.chat.id,
-    #                                                                   fetch=1)[0]))
 
 
 @router.message(Command('help'))
