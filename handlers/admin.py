@@ -2,9 +2,10 @@ import os
 from datetime import datetime, date, timedelta
 
 import pandas as pd
-from aiogram import Router
+from aiogram import Router, Bot
 from aiogram.filters import Command
 from aiogram.types import Message, CallbackQuery, FSInputFile
+from pandas.plotting import table
 
 from database.crud import *
 from filters.filters import IsAdmin
@@ -193,3 +194,27 @@ async def day(callback: CallbackQuery):
     await callback.message.edit_text(text=lexicon('extended').format(date=f"{str(callback.data.split('_')[2].split('-')[0]).zfill(2)}."
                                                                           f"{str(callback.data.split('_')[2].split('-')[1]).zfill(2)}",
                                      reply_markup=None))
+
+
+    @router.message(Command('delete'))
+    async def delete_year(message: Message, bot: Bot):
+
+        first = read(table='Users',
+             columns='user_id',
+             year=1,
+             signed=1)
+        users = read(table='Users',
+             columns='user_id')
+
+        for user in users:
+            if user not in first:
+                update(table='Users',
+                       signed=0,
+                       where=f'user_id = {user[0]}')
+                update(table='Timetable',
+                       signed=0,
+                       by_user=None,
+                       where=f'by_user = {user[0]}')
+                await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
+
+        await message.answer(text=lexicon('/open'), reply_markup=calendar_markup_admin(datetime.today().month))
