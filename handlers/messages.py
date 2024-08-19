@@ -226,7 +226,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
         await state.set_state(FSMRegistration.sign)
     else:
         await callback.message.answer(text=lexicon('not-1'),
-                                    reply_markup=calendar_markup(datetime.today().month))
+                                    reply_markup=None)
         await state.set_state(FSMRegistration.sign)
 
 
@@ -239,15 +239,9 @@ async def aug(callback: CallbackQuery):
                   columns='window',
                   user_id=callback.message.chat.id,
                   fetch=1)[0]
-    if read(table='Users',
-              columns='year',
-              user_id=callback.message.chat.id,
-              fetch=1)[0] == 1:
-        await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                         reply_markup=calendar_markup(8))
-    else:
-        await callback.message.edit_text(text=lexicon('not-1'),
-                                         reply_markup=calendar_markup(8))
+
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=calendar_markup(8))
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
@@ -259,15 +253,9 @@ async def sep(callback: CallbackQuery):
                   columns='window',
                   user_id=callback.message.chat.id,
                   fetch=1)[0]
-    if read(table='Users',
-              columns='year',
-              user_id=callback.message.chat.id,
-              fetch=1)[0] == 1:
-        await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                         reply_markup=calendar_markup(9))
-    else:
-        await callback.message.edit_text(text=lexicon('not-1'),
-                                         reply_markup=calendar_markup(9))
+
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=calendar_markup(9))
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'yes')
@@ -279,15 +267,9 @@ async def day(callback: CallbackQuery):
                   columns='window',
                   user_id=callback.message.chat.id,
                   fetch=1)[0]
-    if read(table='Users',
-              columns='year',
-              user_id=callback.message.chat.id,
-              fetch=1)[0] == 1:
-        await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                         reply_markup=day_markup(callback.data.split('_')[2], window))
-    else:
-        await callback.message.edit_text(text=lexicon('not-1'),
-                                         reply_markup=day_markup(callback.data.split('_')[2], window))
+
+    await callback.message.edit_text(text=lexicon('ready').format(window=window),
+                                     reply_markup=day_markup(callback.data.split('_')[2], window))
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'no')
@@ -323,7 +305,7 @@ async def day(callback: CallbackQuery, state: FSMContext):
                 columns='year',
                 user_id=callback.message.chat.id,
                 fetch=1)[0] != 1:
-            await callback.answer(text=lexicon('not-1'), show_alert=True)
+            await callback.answer(text=lexicon('not-1-short'), show_alert=True)
         else:
             window = read(table='Users',
                           columns='window',
