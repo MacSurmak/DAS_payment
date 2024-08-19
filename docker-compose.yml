@@ -55,4 +55,4 @@ services:
     depends_on:
       - redis
     volumes:
-      - ./container_database:/database
+      - ./database:/database
