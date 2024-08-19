@@ -56,3 +56,4 @@ services:
       - redis
     volumes:
       - ./database:/database
+    restart: always
