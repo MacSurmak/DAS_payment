@@ -362,7 +362,8 @@ async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
     """
     time = read(table='Timetable',
                 columns='month, day, hour, minute',
-                by_user=callback.message.chat.id)
+                by_user=callback.message.chat.id,
+                fetch=1)
     update(table='Users',
            signed=0,
            where=f'user_id = {callback.message.chat.id}')
