@@ -65,7 +65,7 @@ async def process_start_command(message: Message):
                   user_id=message.chat.id,
                   fetch=1)[0]
     await message.answer(text=lexicon('ready').format(window=window),
-                         reply_markup=calendar_markup(datetime.today().month))
+                         reply_markup=calendar_markup(datetime.today().month, window))
 
 
 @router.message(CommandStart(), IsRegistered(), IsSigned())

@@ -222,7 +222,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
               user_id=callback.message.chat.id,
               fetch=1)[0] == 1:
         await callback.message.answer(text=lexicon('ready').format(window=window),
-                                    reply_markup=calendar_markup(datetime.today().month))
+                                    reply_markup=calendar_markup(datetime.today().month, window))
         await state.set_state(FSMRegistration.sign)
     else:
         await callback.message.answer(text=lexicon('not-1'),
@@ -241,7 +241,7 @@ async def aug(callback: CallbackQuery):
                   fetch=1)[0]
 
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                     reply_markup=calendar_markup(8))
+                                     reply_markup=calendar_markup(8, window))
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
@@ -255,7 +255,7 @@ async def sep(callback: CallbackQuery):
                   fetch=1)[0]
 
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                     reply_markup=calendar_markup(9))
+                                     reply_markup=calendar_markup(9, window))
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'yes')
