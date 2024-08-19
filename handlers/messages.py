@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from aiogram import Router
+from aiogram import Router, Bot
 from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery
 
@@ -354,11 +354,15 @@ async def no(callback: CallbackQuery, state: FSMContext):
 
 
 @router.callback_query(lambda callback: callback.data == '_yes', StateFilter(FSMRegistration.cancel))
-async def yes(callback: CallbackQuery, state: FSMContext):
+async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
     """
+    :param bot: Bot
     :param callback: Telegram callback
     :param state: FSM state
     """
+    time = read(table='Timetable',
+                columns='month, day, hour, minute',
+                by_user=callback.message.chat.id)
     update(table='Users',
            signed=0,
            where=f'user_id = {callback.message.chat.id}')
@@ -366,9 +370,26 @@ async def yes(callback: CallbackQuery, state: FSMContext):
            signed=0,
            by_user=None,
            where=f'by_user = {callback.message.chat.id}')
+    user = read(table='Users',
+                columns='name, surname, patronymic, faculty, degree, year',
+                user_id=callback.message.chat.id,
+                fetch=1)
+    admins = read(table='Users',
+                  columns='user_id',
+                  admin=1)
+    for admin in admins:
+        await bot.send_message(chat_id=admin[0], text=lexicon('cancelled-admin').format(name=user[0],
+                                                                                        surname=user[1],
+                                                                                        patronymic=user[2],
+                                                                                        faculty=user[3],
+                                                                                        degree=user[4],
+                                                                                        year=user[5],
+                                                                                        day=str(time[1]).zfill(2),
+                                                                                        month=str(time[0]).zfill(2),
+                                                                                        hour=str(time[2]).zfill(2),
+                                                                                        minute=str(time[3]).zfill(2)))
     await callback.message.edit_text(text=lexicon('cancelled'))
     await state.set_state(FSMRegistration.sign)
-
 
 
 @router.message()

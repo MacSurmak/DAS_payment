@@ -156,6 +156,9 @@ LEXICON: dict[str, str] = {
              'Об открытии записи на продление проживания для студентов старших курсов будет объявлено позднее, '
              'следи за обновлениями в группе студенческого комитета ДАС МГУ (https://vk.com/studcomdas)!',
 
+    'cancelled-admin': '{name} {surname} {patronymic}, факультет {faculty}, {degree} ({year}) отменил(а) запись '
+                       'на {day}.{month} в {hour}:{minute}',
+
     # User markups
     '_no': 'Нет',
     '_yes': 'Да',
