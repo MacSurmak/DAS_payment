@@ -55,7 +55,7 @@ async def process_start_command(message: Message):
     await message.answer(text=lexicon('/register'))
 
 
-@router.message(CommandStart(), (StateFilter(FSMRegistration.sign) or ~IsSigned()))
+@router.message(CommandStart(), ~IsSigned())
 async def process_start_command(message: Message):
     """
     :param message: Telegram message
