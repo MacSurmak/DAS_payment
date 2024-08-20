@@ -245,7 +245,8 @@ async def delete_year(message: Message, bot: Bot):
          year=1,
          signed=1)
     users = read(table='Users',
-         columns='user_id')
+         columns='user_id',
+                 signed=1)
 
     lt = []
     for user in users:
