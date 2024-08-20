@@ -1,5 +1,5 @@
 import calendar
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 from aiogram import Bot
 from aiogram.types import BotCommand
@@ -61,7 +61,6 @@ def faculty_markup() -> InlineKeyboardMarkup:
     kb_builder.row(*buttons_long, width=2).row(*buttons_short, width=3)
     return kb_builder.as_markup(resize_keyboard=True)
 
-
 def calendar_markup(month, window) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
@@ -82,7 +81,17 @@ def calendar_markup(month, window) -> InlineKeyboardMarkup:
     buttons_days: list[InlineKeyboardButton] = []
     for day in days:
         if day.month == month:
-            if day > last_day or day < date.today():
+            times = read(table='Timetable',
+                         columns='hour, minute',
+                         month=day.month,
+                         day=day.day,
+                         window=window,
+                         signed=0)
+
+            if (day > last_day or day < date.today() or
+                    (day == date.today() and
+                     (datetime.now().hour > times[-1][0] or
+                      (datetime.now().hour == times[-1][0] and datetime.now().minute >= times[-1][1])))):
                 sym = '✖'
                 code = 'no'
             elif (0,) in read(table='Timetable',
