@@ -202,31 +202,33 @@ async def action(message: Message, bot: Bot):
     users26 = read(table='Timetable',
          columns='by_user',
                  day=26,
-                 month=8)
+                 month=8,
+                   signed=1)
 
     users27 = read(table='Timetable',
          columns='by_user',
                  day=27,
-                 month=8)
+                 month=8,
+                   signed=1)
 
     lt = []
     for user in users26:
         time = read(table='Timetable',
                     columns='hour, minute',
                     by_user=user[0])
-        # await bot.send_message(chat_id=user[0], text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
-        #                                              f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
-        #                                              f'Приносим извинения за доставленные неудобства.')
+        await bot.send_message(chat_id=user[0], text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
+                                                     f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
+                                                     f'Приносим извинения за доставленные неудобства.')
         lt.append([user[0], time])
 
     for user in users27:
         time = read(table='Timetable',
                     columns='hour, minute',
                     by_user=user[0])
-        # await bot.send_message(chat_id=user[0],
-        #                        text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
-        #                             f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
-        #                             f'Приносим извинения за доставленные неудобства.')
+        await bot.send_message(chat_id=user[0],
+                               text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
+                                    f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
+                                    f'Приносим извинения за доставленные неудобства.')
         lt.append([user[0], time])
 
     await message.answer(text=f'{lt}')
