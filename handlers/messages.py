@@ -23,6 +23,7 @@ class FSMRegistration(StatesGroup):
     year = State()
     sign = State()
     cancel = State()
+    delete = State()
 
 
 @router.message(~IsRegistered())
@@ -410,6 +411,31 @@ async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
                                                                                             minute=str(time[3]).zfill(2)))
     await callback.message.edit_text(text=lexicon('cancelled'))
     await state.set_state(FSMRegistration.sign)
+
+
+@router.callback_query(lambda callback: callback.data == '_no', StateFilter(FSMRegistration.delete))
+async def no(callback: CallbackQuery, state: FSMContext):
+    """
+    :param callback: Telegram callback
+    :param state: FSM state
+    """
+    await callback.message.edit_text(text=lexicon('not-deleted'),
+                                     reply_markup=None)
+    await state.clear()
+
+
+
+@router.callback_query(lambda callback: callback.data == '_yes', StateFilter(FSMRegistration.delete))
+async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
+    """
+    :param bot: Bot
+    :param callback: Telegram callback
+    :param state: FSM state
+    """
+    delete(table='Users',
+           user_id=callback.message.chat.id)
+    await callback.message.edit_text(text=lexicon('deleted'))
+    await state.clear()
 
 
 @router.message()

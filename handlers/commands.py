@@ -1,5 +1,6 @@
 import hashlib
-from datetime import datetime
+from calendar import month
+from datetime import datetime, timedelta
 
 from aiogram import Router
 from aiogram.filters import Command, CommandStart, StateFilter
@@ -24,6 +25,7 @@ class FSMRegistration(StatesGroup):
     registered = State()
     sign = State()
     cancel = State()
+    delete = State()
 
 
 @router.message(CommandStart(), ~IsRegistered())
@@ -129,11 +131,40 @@ async def process_cancel_command(message: Message, state: FSMContext):
                 columns='month, day, hour, minute',
                 by_user=message.from_user.id,
                 fetch=1)
-    await message.answer(text=lexicon('/cancel').format(date=f'{str(time[0]).zfill(2)}.{str(time[1]).zfill(2)}',
-                                                        time=f'{str(time[2]).zfill(2)}:{str(time[3]).zfill(2)}',
-                                                        weekday=read(table='Timetable',
-                                                                     columns='weekday',
-                                                                     by_user=message.chat.id,
-                                                                     fetch=1)[0]),
+    dt = datetime.now()
+    dt_sign = datetime(year=2024, month=time[0], day=time[1], hour=time[2], minute=time[3])
+
+    diff = dt_sign - dt
+
+    if diff <= timedelta(hours=3):
+        await message.answer(text=lexicon('no-cancel'))
+    else:
+        await message.answer(text=lexicon('/cancel').format(date=f'{str(time[0]).zfill(2)}.{str(time[1]).zfill(2)}',
+                                                            time=f'{str(time[2]).zfill(2)}:{str(time[3]).zfill(2)}',
+                                                            weekday=read(table='Timetable',
+                                                                         columns='weekday',
+                                                                         by_user=message.chat.id,
+                                                                         fetch=1)[0]),
+                             reply_markup=yesno_markup())
+        await state.set_state(FSMRegistration.cancel)
+
+
+@router.message(Command('delete'), IsSigned())
+async def process_delete_command(message: Message, state: FSMContext):
+    """
+    :param message: Telegram message
+    :param state: FSM state
+    """
+    await message.answer(text=lexicon('/no-delete'),
+                         reply_markup=None)
+
+
+@router.message(Command('delete'), ~IsSigned())
+async def process_delete_command(message: Message, state: FSMContext):
+    """
+    :param message: Telegram message
+    :param state: FSM state
+    """
+    await message.answer(text=lexicon('/delete'),
                          reply_markup=yesno_markup())
-    await state.set_state(FSMRegistration.cancel)
+    await state.set_state(FSMRegistration.delete)
