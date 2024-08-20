@@ -196,25 +196,37 @@ async def day(callback: CallbackQuery):
                                      reply_markup=None))
 
 
-@router.message(Command('delete'))
-async def delete_year(message: Message, bot: Bot):
+@router.message(Command('action'))
+async def action(message: Message, bot: Bot):
 
-    first = read(table='Users',
+    users26 = read(table='Users',
          columns='user_id',
-         year=1,
-         signed=1)
-    users = read(table='Users',
-         columns='user_id')
+                 day=26,
+                 month=8)
 
-    for user in users:
-        if user not in first:
-            update(table='Users',
-                   signed=0,
-                   where=f'user_id = {user[0]}')
-            update(table='Timetable',
-                   signed=0,
-                   by_user=None,
-                   where=f'by_user = {user[0]}')
-            await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
+    users27 = read(table='Users',
+         columns='user_id',
+                 day=27,
+                 month=8)
 
-    await message.answer(text=lexicon('/open'), reply_markup=calendar_markup_admin(datetime.today().month))
+    lt = []
+    for user in users26:
+        time = read(table='Timatable',
+                    columns='hour, minute',
+                    user_id=user[0])
+        await bot.send_message(chat_id=user[0], text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
+                                                     f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
+                                                     f'Приносим извинения за доставленные неудобства.')
+        lt.append(user[0])
+
+    for user in users27:
+        time = read(table='Timatable',
+                    columns='hour, minute',
+                    user_id=user[0])
+        await bot.send_message(chat_id=user[0],
+                               text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
+                                    f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
+                                    f'Приносим извинения за доставленные неудобства.')
+        lt.append(user[0])
+
+    await message.answer(text=f'{lt}')
