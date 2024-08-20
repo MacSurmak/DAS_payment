@@ -213,7 +213,7 @@ async def action(message: Message, bot: Bot):
     for user in users26:
         time = read(table='Timetable',
                     columns='hour, minute',
-                    from_user=user[0])
+                    by_user=user[0])
         await bot.send_message(chat_id=user[0], text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
                                                      f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
                                                      f'Приносим извинения за доставленные неудобства.')
@@ -222,7 +222,7 @@ async def action(message: Message, bot: Bot):
     for user in users27:
         time = read(table='Timetable',
                     columns='hour, minute',
-                    from_user=user[0])
+                    by_user=user[0])
         await bot.send_message(chat_id=user[0],
                                text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
                                     f'Новое время — {str(time[0]).zfill(2)}:{str(time[1]).zfill(2)} '
