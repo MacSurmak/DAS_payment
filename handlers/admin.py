@@ -211,7 +211,7 @@ async def action(message: Message, bot: Bot):
 
     lt = []
     for user in users26:
-        time = read(table='Timatable',
+        time = read(table='Timetable',
                     columns='hour, minute',
                     user_id=user[0])
         await bot.send_message(chat_id=user[0], text=f'Время твоей записи перенесено в связи с изменением расписания паспортного стола. '
@@ -220,7 +220,7 @@ async def action(message: Message, bot: Bot):
         lt.append(user[0])
 
     for user in users27:
-        time = read(table='Timatable',
+        time = read(table='Timetable',
                     columns='hour, minute',
                     user_id=user[0])
         await bot.send_message(chat_id=user[0],
