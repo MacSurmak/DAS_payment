@@ -199,13 +199,13 @@ async def day(callback: CallbackQuery):
 @router.message(Command('action'))
 async def action(message: Message, bot: Bot):
 
-    users26 = read(table='Users',
-         columns='user_id',
+    users26 = read(table='Timetable',
+         columns='by_user',
                  day=26,
                  month=8)
 
-    users27 = read(table='Users',
-         columns='user_id',
+    users27 = read(table='Timetable',
+         columns='by_user',
                  day=27,
                  month=8)
 
