@@ -61,6 +61,7 @@ def faculty_markup() -> InlineKeyboardMarkup:
     kb_builder.row(*buttons_long, width=2).row(*buttons_short, width=3)
     return kb_builder.as_markup(resize_keyboard=True)
 
+
 def calendar_markup(month, window) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
