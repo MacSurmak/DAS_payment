@@ -251,14 +251,14 @@ async def delete_year(message: Message, bot: Bot):
     lt = []
     for user in users:
         if user not in first:
-            # update(table='Users',
-            #        signed=0,
-            #        where=f'user_id = {user[0]}')
-            # update(table='Timetable',
-            #        signed=0,
-            #        by_user=None,
-            #        where=f'by_user = {user[0]}')
-            # await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
+            update(table='Users',
+                   signed=0,
+                   where=f'user_id = {user[0]}')
+            update(table='Timetable',
+                   signed=0,
+                   by_user=None,
+                   where=f'by_user = {user[0]}')
+            await bot.send_message(chat_id=user[0], text=lexicon('sorry'))
             lt.append(user)
 
-    await message.answer(text=f'{lt}', reply_markup=calendar_markup_admin(datetime.today().month))
+    await message.answer(text=f'{lt}')
