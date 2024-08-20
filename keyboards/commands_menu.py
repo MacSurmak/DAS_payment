@@ -140,7 +140,9 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
         minute = time[1]
         signed = time[2]
 
-        if signed == 0:
+        if signed == 0 and (day > date.today().day or
+                            (day == date.today().day and hour < datetime.now().hour) or
+                            (day == date.today().day and hour == datetime.now().hour and minute < datetime.now().minute)):
             sym = '✅'
         else:
             sym = '✖'
