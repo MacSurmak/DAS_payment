@@ -294,13 +294,15 @@ async def day(callback: CallbackQuery, state: FSMContext):
         await callback.answer(text=lexicon('already'), show_alert=True)
     else:
         timestamp = callback.data.split('_')[1].split(':')
-        if read(table='Timetable',
+        time_r = read(table='Timetable',
                 columns='signed',
                 month=int(timestamp[0]),
                 day=int(timestamp[1]),
                 hour=int(timestamp[2]),
                 minute=int(timestamp[3]),
-                fetch=1)[0] == 1:
+                fetch=1)
+        dt = datetime(year=2024, month=int(timestamp[0]), day=int(timestamp[1]), hour=int(timestamp[2]), minute=int(timestamp[3]))
+        if time_r[0] == 1 or dt < datetime.now():
             await callback.answer(text=lexicon('already_time'), show_alert=True)
         elif read(table='Users',
                 columns='year',

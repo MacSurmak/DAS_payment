@@ -135,14 +135,16 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
 
     buttons_times: list[InlineKeyboardButton] = []
 
+    now = datetime.now()
+
     for time in times:
         hour = time[0]
         minute = time[1]
         signed = time[2]
 
-        if signed == 0 and (day > date.today().day or
-                            (day == date.today().day and hour < datetime.now().hour) or
-                            (day == date.today().day and hour == datetime.now().hour and minute < datetime.now().minute)):
+        dt = datetime(year=2024, month=month, day=day, hour=hour, minute=minute)
+
+        if signed == 0 and now < dt:
             sym = '✅'
         else:
             sym = '✖'
