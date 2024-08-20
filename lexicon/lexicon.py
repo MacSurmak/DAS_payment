@@ -158,7 +158,7 @@ LEXICON: dict[str, str] = {
 
     'not-1-short': 'Сейчас запись открыта только для первокурсников, для старших курсов запись откроется позднее.',
 
-    'cancelled-admin': '{name} {surname} {patronymic}, факультет {faculty}, {degree} ({year} курс) отменил(а) запись '
+    'cancelled-admin': '{surname} {name} {patronymic}, факультет {faculty}, {degree} ({year} курс) отменил(а) запись '
                        'на {day}.{month} в {hour}:{minute}',
 
     # User markups

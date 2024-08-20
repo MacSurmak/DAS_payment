@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, date
 
 from aiogram import Router, Bot
 from aiogram.fsm.state import default_state
@@ -377,6 +377,7 @@ async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
     :param callback: Telegram callback
     :param state: FSM state
     """
+    day = int(date.today().day)
     time = read(table='Timetable',
                 columns='month, day, hour, minute',
                 by_user=callback.message.chat.id,
@@ -395,17 +396,18 @@ async def yes(callback: CallbackQuery, state: FSMContext, bot: Bot):
     admins = read(table='Users',
                   columns='user_id',
                   admin=1)
-    for admin in admins:
-        await bot.send_message(chat_id=admin[0], text=lexicon('cancelled-admin').format(name=user[0],
-                                                                                        surname=user[1],
-                                                                                        patronymic=user[2],
-                                                                                        faculty=user[3],
-                                                                                        degree=user[4],
-                                                                                        year=user[5],
-                                                                                        day=str(time[1]).zfill(2),
-                                                                                        month=str(time[0]).zfill(2),
-                                                                                        hour=str(time[2]).zfill(2),
-                                                                                        minute=str(time[3]).zfill(2)))
+    if (time[1] - day) < 3:
+        for admin in admins:
+            await bot.send_message(chat_id=admin[0], text=lexicon('cancelled-admin').format(name=user[0],
+                                                                                            surname=user[1],
+                                                                                            patronymic=user[2],
+                                                                                            faculty=user[3],
+                                                                                            degree=user[4],
+                                                                                            year=user[5],
+                                                                                            day=str(time[1]).zfill(2),
+                                                                                            month=str(time[0]).zfill(2),
+                                                                                            hour=str(time[2]).zfill(2),
+                                                                                            minute=str(time[3]).zfill(2)))
     await callback.message.edit_text(text=lexicon('cancelled'))
     await state.set_state(FSMRegistration.sign)
 
