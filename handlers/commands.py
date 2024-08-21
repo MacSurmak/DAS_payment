@@ -131,6 +131,7 @@ async def process_cancel_command(message: Message, state: FSMContext):
                 columns='month, day, hour, minute',
                 by_user=message.from_user.id,
                 fetch=1)
+
     dt = datetime.now()
     dt_sign = datetime(year=2024, month=time[0], day=time[1], hour=time[2], minute=time[3])
 
