@@ -1,4 +1,6 @@
 import asyncio
+import os
+import time
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
@@ -14,6 +16,8 @@ from middlewares.middlewares import MessageThrottlingMiddleware
 from services import setup_logger
 from services.services import notify_day_before, notify_hour_before
 
+os.environ['TZ'] = 'Europe/London'
+time.tzset()
 
 async def main() -> None:
 

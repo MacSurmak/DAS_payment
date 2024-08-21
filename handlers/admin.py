@@ -95,14 +95,11 @@ async def process_table_command(message: Message):
                 for i in day:
                     if i[7] is not None:
 
-                        try:
-                            surname.append(read(table='Users',
-                                                columns='surname',
-                                                user_id=i[7],
-                                                fetch=1)[0])
-                        except TypeError:
-                            await message.answer(text=f'{i[7]}')
-                            await message.answer(text=f'{datetime.now()}')
+
+                        surname.append(read(table='Users',
+                                            columns='surname',
+                                            user_id=i[7],
+                                            fetch=1)[0])
 
                         name.append(read(table='Users',
                                             columns='name',
