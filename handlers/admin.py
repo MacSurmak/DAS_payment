@@ -102,6 +102,7 @@ async def process_table_command(message: Message):
                                                 fetch=1)[0])
                         except TypeError:
                             print(i[7])
+                            print(datetime.now())
 
                         name.append(read(table='Users',
                                             columns='name',
