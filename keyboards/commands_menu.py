@@ -88,10 +88,7 @@ def calendar_markup(month, window) -> InlineKeyboardMarkup:
                          window=window,
                          signed=0)
 
-            if (day > last_day or day < date.today() or
-                    (day == date.today() and
-                     (datetime.now().hour > times[-1][0] or
-                      (datetime.now().hour == times[-1][0] and datetime.now().minute >= times[-1][1])))):
+            if day > last_day or day < date.today():
                 sym = '✖'
                 code = 'no'
             elif (0,) in read(table='Timetable',
@@ -135,16 +132,16 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
 
     buttons_times: list[InlineKeyboardButton] = []
 
-    now = datetime.now()
+    # now = datetime.now()
 
     for time in times:
         hour = time[0]
         minute = time[1]
         signed = time[2]
 
-        dt = datetime(year=2024, month=month, day=day, hour=hour, minute=minute)
+        # dt = datetime(year=2024, month=month, day=day, hour=hour, minute=minute)
 
-        if signed == 0 and now < dt:
+        if signed == 0:
             sym = '✅'
         else:
             sym = '✖'
