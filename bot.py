@@ -16,7 +16,7 @@ from middlewares.middlewares import MessageThrottlingMiddleware
 from services import setup_logger
 from services.services import notify_day_before, notify_hour_before
 
-os.environ['TZ'] = 'Europe/London'
+os.environ['TZ'] = 'Europe/Moscow'
 time.tzset()
 
 async def main() -> None:
