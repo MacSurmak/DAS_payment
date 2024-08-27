@@ -137,7 +137,7 @@ async def process_cancel_command(message: Message, state: FSMContext):
 
     diff = dt_sign - dt
 
-    if diff <= timedelta(hours=3):
+    if timedelta(0) < diff <= timedelta(hours=3):
         await message.answer(text=lexicon('no-cancel'))
     else:
         await message.answer(text=lexicon('/cancel').format(date=f'{str(time[0]).zfill(2)}.{str(time[1]).zfill(2)}',
