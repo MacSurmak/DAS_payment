@@ -55,7 +55,8 @@ def faculty_markup() -> InlineKeyboardMarkup:
     ]
     buttons_short: list[InlineKeyboardButton] = [
         InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['kpu', 'ssn', 'isa',
-                                                                                            'fbb', 'ffm', 'fhi']
+                                                                                            'fbb', 'ffm', 'fhi',
+                                                                                            'oth']
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(*buttons_long, width=2).row(*buttons_short, width=3)
