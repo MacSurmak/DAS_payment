@@ -159,7 +159,7 @@ day INTEGER
 # except IntegrityError:
 #      pass
 
-today = datetime.datetime.now()
+today = datetime.datetime.today()
 week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
 try:
