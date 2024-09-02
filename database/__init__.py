@@ -159,15 +159,57 @@ day INTEGER
 # except IntegrityError:
 #      pass
 
-today = datetime.datetime(year=2024, month=9, day=2)
 week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 
+today = datetime.datetime(year=2024, month=9, day=2)
 try:
 
-    while today <= datetime.datetime(year=2024, month=9, day=10):
+    while today <= datetime.datetime(year=2024, month=9, day=9):
         if today.weekday() in [1, 3]:
 
             time1 = today + datetime.timedelta(hours=14, minutes=10)
+            time2 = today + datetime.timedelta(hours=16, minutes=35)
+            time3 = today + datetime.timedelta(hours=16, minutes=50)
+            time4 = today + datetime.timedelta(hours=17, minutes=20)
+
+            window = 1
+
+            while time1 <= time2:
+                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time1.hour,
+                                time1.minute, week[today.weekday()], window,))
+                time1 += datetime.timedelta(minutes=5)
+                if window < 3:
+                    window += 1
+                else:
+                    window = 1
+
+            while time3 <= time4:
+                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
+                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
+                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
+                               (timestamp, today.month, today.day, time3.hour,
+                                time3.minute, week[today.weekday()], window,))
+                time3 += datetime.timedelta(minutes=5)
+                if window < 3:
+                    window += 1
+                else:
+                    window = 1
+
+        today += datetime.timedelta(days=1)
+
+except IntegrityError:
+     pass
+
+today = datetime.datetime(year=2024, month=9, day=10)
+try:
+
+    while today <= datetime.datetime(year=2024, month=9, day=15):
+        if today.weekday() in [1, 3]:
+
+            time1 = today + datetime.timedelta(hours=15, minutes=00)
             time2 = today + datetime.timedelta(hours=16, minutes=35)
             time3 = today + datetime.timedelta(hours=16, minutes=50)
             time4 = today + datetime.timedelta(hours=17, minutes=20)
