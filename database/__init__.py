@@ -206,7 +206,7 @@ except IntegrityError:
 today = datetime.datetime(year=2024, month=9, day=10)
 try:
 
-    while today <= datetime.datetime(year=2024, month=9, day=15):
+    while today <= datetime.datetime(year=2024, month=9, day=30):
         if today.weekday() in [1, 3]:
 
             time1 = today + datetime.timedelta(hours=15, minutes=00)
