@@ -218,17 +218,9 @@ async def yes(callback: CallbackQuery, state: FSMContext):
            where=f'user_id={callback.message.chat.id}')
     await callback.message.delete()
 
-    if read(table='Users',
-              columns='year',
-              user_id=callback.message.chat.id,
-              fetch=1)[0] == 1:
-        await callback.message.answer(text=lexicon('ready').format(window=window),
+    await callback.message.answer(text=lexicon('ready').format(window=window),
                                     reply_markup=calendar_markup(datetime.today().month, window))
-        await state.set_state(FSMRegistration.sign)
-    else:
-        await callback.message.answer(text=lexicon('not-1'),
-                                    reply_markup=None)
-        await state.set_state(FSMRegistration.sign)
+    await state.set_state(FSMRegistration.sign)
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
@@ -304,11 +296,6 @@ async def day(callback: CallbackQuery, state: FSMContext):
         dt = datetime(year=2024, month=int(timestamp[0]), day=int(timestamp[1]), hour=int(timestamp[2]), minute=int(timestamp[3]))
         if time_r[0] == 1 or dt < datetime.now():
             await callback.answer(text=lexicon('already_time'), show_alert=True)
-        elif read(table='Users',
-                columns='year',
-                user_id=callback.message.chat.id,
-                fetch=1)[0] != 1:
-            await callback.answer(text=lexicon('not-1-short'), show_alert=True)
         else:
             window = read(table='Users',
                           columns='window',
