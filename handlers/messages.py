@@ -296,6 +296,11 @@ async def day(callback: CallbackQuery, state: FSMContext):
         dt = datetime(year=2024, month=int(timestamp[0]), day=int(timestamp[1]), hour=int(timestamp[2]), minute=int(timestamp[3]))
         if time_r[0] == 1 or dt < datetime.now():
             await callback.answer(text=lexicon('already_time'), show_alert=True)
+        elif read(table='Users',
+                columns='year',
+                user_id=callback.message.chat.id,
+                fetch=1)[0] != 1 and dt < datetime(year=2024, month=9, day=16):
+            await callback.answer(text=lexicon('not-1-short'), show_alert=True)
         else:
             window = read(table='Users',
                           columns='window',
