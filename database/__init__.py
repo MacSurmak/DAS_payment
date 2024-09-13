@@ -203,10 +203,11 @@ week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 # except IntegrityError:
 #      pass
 
-today = datetime.datetime(year=2024, month=9, day=15)
+today = datetime.datetime(year=2024, month=9, day=16)
 try:
 
     while today <= datetime.datetime(year=2024, month=9, day=30):
+
         if today.weekday() in [1, 3]:
 
             time1 = today + datetime.timedelta(hours=15, minutes=00)
@@ -221,12 +222,15 @@ try:
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
-                        timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
+                        timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} window {window}'
+
                     cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
                                    'VALUES (?, ?, ?, ?, ?, ?, ?)',
                                    (timestamp, today.month, today.day, time1.hour,
                                     time1.minute, week[today.weekday()], window,))
+
                     window += 1
+
                 window = 1
                 time1 += datetime.timedelta(minutes=5)
 
@@ -318,7 +322,7 @@ try:
         today += datetime.timedelta(days=1)
 
 except IntegrityError:
-     pass
+     print('ERROR')
 
 # Сохраняем изменения и закрываем соединение
 connection.commit()
