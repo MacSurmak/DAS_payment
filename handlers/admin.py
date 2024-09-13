@@ -67,7 +67,7 @@ async def process_table_command(message: Message):
 
                 for d in day_t:
                     day.append(d)
-                day.sort()
+                day.sort(key=lambda a: a[3])
 
                 timestamp = f'{day[0][2]} {lexicon(day[0][1])[0:3]}, {day[0][5]}'
 
