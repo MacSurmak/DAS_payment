@@ -299,7 +299,12 @@ async def day(callback: CallbackQuery, state: FSMContext):
         elif read(table='Users',
                 columns='year',
                 user_id=callback.message.chat.id,
-                fetch=1)[0] != 1 and dt < datetime(year=2024, month=9, day=16):
+                fetch=1)[0] == 1 and dt.time() < datetime(year=2024, month=9, day=16, hour=16, minute=50).time():
+            await callback.answer(text=lexicon('not-higher'), show_alert=True)
+        elif read(table='Users',
+                  columns='year',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0] != 1 and dt.time() > datetime(year=2024, month=9, day=16, hour=16, minute=50).time():
             await callback.answer(text=lexicon('not-1-short'), show_alert=True)
         else:
             window = read(table='Users',
