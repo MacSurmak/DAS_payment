@@ -125,11 +125,16 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(InlineKeyboardButton(text=f"{day} {lexicon(f'{month}')}", callback_data='_empty'))
 
-    times = read(table='Timetable',
+    times = []
+    times_t = read(table='Timetable',
                  columns='hour, minute, signed',
                  month=month,
                  day=day,
                  window=window)
+    for t in times_t:
+        times.append(t)
+    times.sort()
+
 
     buttons_times: list[InlineKeyboardButton] = []
 
