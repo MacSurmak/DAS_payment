@@ -218,8 +218,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
@@ -234,8 +237,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
@@ -255,8 +261,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
@@ -271,8 +280,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
@@ -295,8 +307,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
@@ -311,8 +326,11 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
             timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
-            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                    (timestamp,)).fetchone()[0]
+            try:
+                window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                        (timestamp,)).fetchone()[0]
+            except TypeError:
+                window = -1
 
             for w in [1, 2, 3]:
                 if w != window:
