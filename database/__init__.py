@@ -218,7 +218,6 @@ try:
 
             while time1 <= time2:
                 while window <= 3:
-                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
@@ -233,7 +232,6 @@ try:
 
             while time3 <= time4:
                 while window <= 3:
-                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
@@ -244,7 +242,7 @@ try:
                                     time1.minute, week[today.weekday()], window,))
                     window += 1
                 window = 1
-                time1 += datetime.timedelta(minutes=5)
+                time3 += datetime.timedelta(minutes=5)
 
         elif today.weekday() in [0, 2, 4]:
 
@@ -257,7 +255,6 @@ try:
 
             while time1 <= time2:
                 while window <= 3:
-                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
@@ -273,7 +270,6 @@ try:
             while time3 <= time4:
                 while window <= 3:
                     while window <= 3:
-                        timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                         if window == 1:
                             timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                         else:
@@ -284,7 +280,7 @@ try:
                                         time1.minute, week[today.weekday()], window,))
                         window += 1
                 window = 1
-                time1 += datetime.timedelta(minutes=5)
+                time3 += datetime.timedelta(minutes=5)
 
             time1 = today + datetime.timedelta(hours=15, minutes=00)
             time2 = today + datetime.timedelta(hours=16, minutes=35)
@@ -293,7 +289,6 @@ try:
 
             while time1 <= time2:
                 while window <= 3:
-                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
@@ -308,7 +303,6 @@ try:
 
             while time3 <= time4:
                 while window <= 3:
-                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     if window == 1:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
                     else:
@@ -319,8 +313,7 @@ try:
                                     time1.minute, week[today.weekday()], window,))
                     window += 1
                 window = 1
-                time1 += datetime.timedelta(minutes=5)
-
+                time3 += datetime.timedelta(minutes=5)
 
         today += datetime.timedelta(days=1)
 
