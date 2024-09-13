@@ -203,86 +203,11 @@ week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 # except IntegrityError:
 #      pass
 
-today = datetime.datetime(year=2024, month=9, day=16)
+today = datetime.datetime(year=2024, month=9, day=15)
 
 while today <= datetime.datetime(year=2024, month=9, day=30):
 
-    if today.weekday() in [1, 3]:
-
-        time1 = today + datetime.timedelta(hours=15, minutes=00)
-        time2 = today + datetime.timedelta(hours=16, minutes=35)
-        time3 = today + datetime.timedelta(hours=16, minutes=50)
-        time4 = today + datetime.timedelta(hours=17, minutes=25)
-
-        while time1 <= time2:
-
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                           'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                           (timestamp, today.month, today.day, time1.hour,
-                            time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            time1 += datetime.timedelta(minutes=5)
-
-        while time3 <= time4:
-
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
-
-            time3 += datetime.timedelta(minutes=5)
-
-    elif today.weekday() in [0, 2, 4]:
+    if today.weekday() in [0, 2, 4]:
 
         time1 = today + datetime.timedelta(hours=9, minutes=20)
         time2 = today + datetime.timedelta(hours=10, minutes=50)
@@ -291,69 +216,33 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
         while time1 <= time2:
 
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
 
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
 
             time1 += datetime.timedelta(minutes=5)
 
         while time3 <= time4:
 
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
 
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
 
             time3 += datetime.timedelta(minutes=5)
 
@@ -364,69 +253,73 @@ while today <= datetime.datetime(year=2024, month=9, day=30):
 
         while time1 <= time2:
 
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
 
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
 
             time1 += datetime.timedelta(minutes=5)
 
         while time3 <= time4:
 
-            try:
-                window = 1
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
-            try:
-                window = 2
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
 
-            try:
-                window = 3
-                timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{window}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
-            except IntegrityError:
-                pass
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
+
+            time3 += datetime.timedelta(minutes=5)
+
+
+    elif today.weekday() in [1, 3]:
+
+        time1 = today + datetime.timedelta(hours=15, minutes=00)
+        time2 = today + datetime.timedelta(hours=16, minutes=35)
+        time3 = today + datetime.timedelta(hours=16, minutes=50)
+        time4 = today + datetime.timedelta(hours=17, minutes=25)
+
+        while time1 <= time2:
+
+            timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
+
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
+
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
+
+            time1 += datetime.timedelta(minutes=5)
+
+        while time3 <= time4:
+
+            timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
+
+            window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
+                                    (timestamp,)).fetchone()[0]
+
+            for w in [1, 2, 3]:
+                if w != window:
+                    timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
+                    cursor.execute(
+                        'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                        (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
 
             time3 += datetime.timedelta(minutes=5)
 
