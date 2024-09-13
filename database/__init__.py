@@ -322,7 +322,7 @@ try:
         today += datetime.timedelta(days=1)
 
 except IntegrityError:
-     print('ERROR')
+     pass
 
 # Сохраняем изменения и закрываем соединение
 connection.commit()
