@@ -279,6 +279,10 @@ async def day(callback: CallbackQuery, state: FSMContext):
     :param callback: Telegram callback
     :param state: FSM state
     """
+    window = read(table='Users',
+                  columns='window',
+                  user_id=callback.message.chat.id,
+                  fetch=1)[0]
     if read(table='Users',
             columns='signed',
             user_id=callback.message.chat.id,
@@ -292,6 +296,7 @@ async def day(callback: CallbackQuery, state: FSMContext):
                 day=int(timestamp[1]),
                 hour=int(timestamp[2]),
                 minute=int(timestamp[3]),
+                window=window,
                 fetch=1)
         dt = datetime(year=2024, month=int(timestamp[0]), day=int(timestamp[1]), hour=int(timestamp[2]), minute=int(timestamp[3]))
         if time_r[0] == 1 or dt < datetime.now():
@@ -307,10 +312,6 @@ async def day(callback: CallbackQuery, state: FSMContext):
                   fetch=1)[0] != 1 and dt.time() > datetime(year=2024, month=9, day=16, hour=16, minute=50).time():
             await callback.answer(text=lexicon('not-1-short'), show_alert=True)
         else:
-            window = read(table='Users',
-                          columns='window',
-                          user_id=callback.message.chat.id,
-                          fetch=1)[0]
             update(table='Users',
                    signed=1,
                    where=f'user_id={callback.message.chat.id}')
@@ -320,7 +321,8 @@ async def day(callback: CallbackQuery, state: FSMContext):
                    where=f'month={int(timestamp[0])}, '
                          f'day={int(timestamp[1])}, '
                          f'hour={int(timestamp[2])}, '
-                         f'minute={int(timestamp[3])}')
+                         f'minute={int(timestamp[3])},'
+                         f'window={window}')
             await callback.message.delete()
             await callback.message.answer(text=lexicon('signed').format(date=f"{timestamp[1]} "
                                                                                 f"{lexicon(timestamp[0]).split(' ')[0]}",
