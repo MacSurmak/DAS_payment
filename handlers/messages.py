@@ -234,7 +234,7 @@ async def aug(callback: CallbackQuery):
                   fetch=1)[0]
 
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                     reply_markup=calendar_markup(8, window))
+                                     reply_markup=calendar_markup(9, window))
 
 
 @router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
@@ -248,7 +248,7 @@ async def sep(callback: CallbackQuery):
                   fetch=1)[0]
 
     await callback.message.edit_text(text=lexicon('ready').format(window=window),
-                                     reply_markup=calendar_markup(9, window))
+                                     reply_markup=calendar_markup(10, window))
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'day' and callback.data.split('_')[1] == 'yes')

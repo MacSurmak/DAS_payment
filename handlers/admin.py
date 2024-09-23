@@ -166,7 +166,7 @@ async def aug(callback: CallbackQuery):
     """
     :param callback: Telegram callback
     """
-    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(8))
+    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(9))
 
 
 @router.callback_query(lambda callback: callback.data == 'admin_calendar_next')
@@ -174,7 +174,7 @@ async def sep(callback: CallbackQuery):
     """
     :param callback: Telegram callback
     """
-    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(9))
+    await callback.message.edit_text(text=lexicon('/open'), reply_markup=calendar_markup_admin(10))
 
 
 @router.callback_query(lambda callback: callback.data.split('_')[0] == 'open')
