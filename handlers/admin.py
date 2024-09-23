@@ -57,10 +57,17 @@ async def process_table_command(message: Message):
     
     with pd.ExcelWriter(f"{filename}.xlsx") as writer:
         while today <= last_day:
-            day = read(table='Timetable',
+
+            day = []
+            day_t = read(table='Timetable',
                        month=today.month,
                        day=today.day)
-            if day:
+
+            if day_t:
+
+                for d in day_t:
+                    day.append(d)
+                day.sort(key=lambda a: (a[3], a[4], a[8]))
 
                 timestamp = f'{day[0][2]} {lexicon(day[0][1])[0:3]}, {day[0][5]}'
 
