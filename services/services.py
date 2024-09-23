@@ -52,3 +52,32 @@ async def notify_hour_before(bot: Bot):
             await bot.send_message(chat_id=user[0],
                                    text=lexicon('notif-hour').format(time=f'{time[2]}:{str(time[3]).zfill(2)}',
                                                                     window=user[1]))
+
+
+async def send(bot: Bot):
+
+    connection = sqlite3.connect('database/main.db')
+    cursor = connection.cursor()
+
+    cursor.execute(
+        '''SELECT by_user FROM Timetable WHERE month = 9 AND weekday = 'Чт' AND day > 23 AND signed = 1 AND (timestamp LIKE '%w1%' OR timestamp LIKE '%w2%' OR timestamp LIKE '%w3%')''')
+    fet = cursor.fetchall()
+    ids = []
+    for ent in fet:
+        ids.append(ent[0])
+
+    for user in ids:
+        cursor.execute(
+            '''UPDATE Timetable SET signed = 0 AND by_user = NULL WHERE by_user = ?''',
+            (user,))
+        cursor.execute(
+            '''UPDATE Users SET signed = 0 WHERE user_id = ?''',
+            (user,))
+
+    connection.commit()
+    connection.close()
+
+    ids.append(391102946)
+    for user in ids:
+        await bot.send_message(chat_id=user,
+                               text=lexicon('sorry'))

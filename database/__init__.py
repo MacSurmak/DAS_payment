@@ -379,12 +379,6 @@ try:
 
 except IntegrityError:
     pass
-cursor.execute('''SELECT by_user FROM Timetable WHERE month = 9 AND weekday = 'Чт' AND day > 23 AND signed = 1 AND (timestamp LIKE '%w1%' OR timestamp LIKE '%w2%' OR timestamp LIKE '%w3%')''')
-fet = cursor.fetchall()
-ids = []
-for ent in fet:
-    ids.append(ent[0])
-print(ids)
 
 # Сохраняем изменения и закрываем соединение
 connection.commit()

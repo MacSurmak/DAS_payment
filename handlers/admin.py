@@ -11,6 +11,7 @@ from database.crud import *
 from filters.filters import IsAdmin
 from keyboards.commands_menu import calendar_markup_admin
 from lexicon.lexicon import lexicon
+from services.services import send
 
 router: Router = Router(name='admin-router')
 router.message.filter(IsAdmin())
@@ -196,3 +197,9 @@ async def day(callback: CallbackQuery):
     await callback.message.edit_text(text=lexicon('extended').format(date=f"{str(callback.data.split('_')[2].split('-')[0]).zfill(2)}."
                                                                           f"{str(callback.data.split('_')[2].split('-')[1]).zfill(2)}",
                                      reply_markup=None))
+
+
+@router.message(Command('drop'))
+async def process_drop_command(message: Message, bot: Bot):
+    await send(bot)
+    await message.answer(text='dropped')
