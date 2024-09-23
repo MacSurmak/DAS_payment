@@ -59,12 +59,50 @@ async def send(bot: Bot):
     connection = sqlite3.connect('database/main.db')
     cursor = connection.cursor()
 
-    cursor.execute(
-        '''SELECT by_user FROM Timetable WHERE month = 9 AND weekday = 'Чт' AND day > 23 AND signed = 1 AND (timestamp LIKE '%w1%' OR timestamp LIKE '%w2%' OR timestamp LIKE '%w3%')''')
-    fet = cursor.fetchall()
-    ids = []
-    for ent in fet:
-        ids.append(ent[0])
+    ids = [864220392,
+            1646505435,
+            840675656,
+            888603139,
+            1942317820,
+            656928668,
+            1313375899,
+            909712586,
+            1266571539,
+            874773157,
+            1038859786,
+            420334813,
+            1304825749,
+            532438186,
+            1982736448,
+            1435035857,
+            607608788,
+            1356580854,
+            1061147659,
+            1072091652,
+            5173832582,
+            1041360401,
+            1194294959,
+            356493119,
+            586846289,
+            1067838159,
+            1292497490,
+            1589412689,
+            617738485,
+            266410417,
+            5261233061,
+            308731945,
+            756342700,
+            984042932,
+            743127014,
+            847371938,
+            718114190,
+            5446946769,
+            783617457,
+            840210765,
+            813546403,
+            1914784293,
+            886889341,
+            1566532363]
 
     for user in ids:
         cursor.execute(
