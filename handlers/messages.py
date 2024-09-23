@@ -223,7 +223,7 @@ async def yes(callback: CallbackQuery, state: FSMContext):
     await state.set_state(FSMRegistration.sign)
 
 
-@router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_8')
+@router.callback_query(lambda callback: callback.data == 'calendar_back' or callback.data == 'back_to_calendar_9')
 async def aug(callback: CallbackQuery):
     """
     :param callback: Telegram callback
@@ -237,7 +237,7 @@ async def aug(callback: CallbackQuery):
                                      reply_markup=calendar_markup(9, window))
 
 
-@router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_9')
+@router.callback_query(lambda callback: callback.data == 'calendar_next' or callback.data == 'back_to_calendar_10')
 async def sep(callback: CallbackQuery):
     """
     :param callback: Telegram callback
