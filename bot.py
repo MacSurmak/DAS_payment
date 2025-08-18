@@ -16,35 +16,39 @@ from middlewares.middlewares import MessageThrottlingMiddleware
 from services import setup_logger
 from services.services import notify_day_before, notify_hour_before
 
-os.environ['TZ'] = 'Europe/Moscow'
+os.environ["TZ"] = "Europe/Moscow"
 time.tzset()
+
 
 async def main() -> None:
 
-    bot: Bot = Bot(token=config.bot.token,
-                   default=DefaultBotProperties(parse_mode='HTML'))
+    bot: Bot = Bot(
+        token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML")
+    )
 
     bot_storage: RedisStorage = RedisStorage.from_url(
-        f'redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/0'
+        f"redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/0"
     )
     middleware_storage: RedisStorage = RedisStorage.from_url(
-        f'redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/1'
+        f"redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/1"
     )
 
     dp: Dispatcher = Dispatcher(storage=bot_storage)
 
-    dp.message.middleware.register(MessageThrottlingMiddleware(storage=middleware_storage))
+    dp.message.middleware.register(
+        MessageThrottlingMiddleware(storage=middleware_storage)
+    )
     dp.callback_query.middleware(CallbackAnswerMiddleware())
 
     dp.include_router(admin.router)
     dp.include_router(commands.router)
     dp.include_router(messages.router)
 
-    scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
+    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
     scheduler.start()
 
-    scheduler.add_job(notify_hour_before, 'cron', hour='8-17', minute='*/5', args=[bot])
-    scheduler.add_job(notify_day_before, 'cron', hour='9-18', minute='*/5', args=[bot])
+    scheduler.add_job(notify_hour_before, "cron", hour="8-17", minute="*/5", args=[bot])
+    scheduler.add_job(notify_day_before, "cron", hour="9-18", minute="*/5", args=[bot])
 
     await set_commands_menu(bot)
     await bot.delete_webhook(drop_pending_updates=True)
@@ -54,6 +58,6 @@ async def main() -> None:
     await polling_task
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup_logger("DEBUG")
     asyncio.run(main())

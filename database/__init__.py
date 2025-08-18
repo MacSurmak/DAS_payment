@@ -3,11 +3,12 @@ import sqlite3
 from sqlite3 import IntegrityError
 
 # Устанавливаем соединение с базой данных
-connection = sqlite3.connect('database/main.db')
+connection = sqlite3.connect("database/main.db")
 cursor = connection.cursor()
 
 # Создаем таблицу Users
-cursor.execute('''
+cursor.execute(
+    """
 CREATE TABLE IF NOT EXISTS Users (
 user_id INTEGER PRIMARY KEY,
 name TEXT,
@@ -21,10 +22,12 @@ signed INTEGER DEFAULT '0',
 admin INTEGER DEFAULT '0',
 ready INTEGER DEFAULT '0'
 )
-''')
+"""
+)
 
 # Создаем таблицу Timetable
-cursor.execute('''
+cursor.execute(
+    """
 CREATE TABLE IF NOT EXISTS Timetable (
 timestamp TEXT PRIMARY KEY,
 month INTEGER,
@@ -36,18 +39,21 @@ signed INTEGER DEFAULT '0',
 by_user INTEGER,
 window INTEGER
 )
-''')
+"""
+)
 
 # Создаем таблицу Lastday
-cursor.execute('''
+cursor.execute(
+    """
 CREATE TABLE IF NOT EXISTS Lastday (
 id INTEGER PRIMARY KEY DEFAULT '1',
 month INTEGER,
 day INTEGER
 )
-''')
+"""
+)
 
-week = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+week = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
 
 # try:
 #     cursor.execute(
@@ -219,8 +225,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -228,8 +235,17 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time1.hour,
+                                time1.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time1 += datetime.timedelta(minutes=5)
 
@@ -238,8 +254,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -247,8 +264,17 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time3.hour,
+                                time3.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time3 += datetime.timedelta(minutes=5)
 
@@ -262,8 +288,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -271,8 +298,17 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time1.hour,
+                                time1.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time1 += datetime.timedelta(minutes=5)
 
@@ -281,8 +317,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -290,11 +327,19 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time3.hour,
+                                time3.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time3 += datetime.timedelta(minutes=5)
-
 
         elif today.weekday() == 1:
 
@@ -308,8 +353,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -317,8 +363,17 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time1.hour, time1.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time1.hour,
+                                time1.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time1 += datetime.timedelta(minutes=5)
 
@@ -327,8 +382,9 @@ try:
                 timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
 
                 try:
-                    window = cursor.execute('SELECT window FROM Timetable WHERE timestamp = ?',
-                                            (timestamp,)).fetchone()[0]
+                    window = cursor.execute(
+                        "SELECT window FROM Timetable WHERE timestamp = ?", (timestamp,)
+                    ).fetchone()[0]
                 except TypeError:
                     window = -1
 
@@ -336,11 +392,19 @@ try:
                     if w != window:
                         timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"} w{w}'
                         cursor.execute(
-                            'INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                            (timestamp, today.month, today.day, time3.hour, time3.minute, week[today.weekday()], w,))
+                            "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                            (
+                                timestamp,
+                                today.month,
+                                today.day,
+                                time3.hour,
+                                time3.minute,
+                                week[today.weekday()],
+                                w,
+                            ),
+                        )
 
                 time3 += datetime.timedelta(minutes=5)
-
 
         elif today.weekday() == 3:
 
@@ -353,10 +417,19 @@ try:
 
             while time1 <= time2:
                 timestamp = f'{today.month}.{today.day} {time1.hour}:{time1.minute if time1.minute > 9 else f"0{time1.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time1.hour,
-                                time1.minute, week[today.weekday()], window,))
+                cursor.execute(
+                    "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        timestamp,
+                        today.month,
+                        today.day,
+                        time1.hour,
+                        time1.minute,
+                        week[today.weekday()],
+                        window,
+                    ),
+                )
                 time1 += datetime.timedelta(minutes=5)
                 if window < 3:
                     window += 1
@@ -365,10 +438,19 @@ try:
 
             while time3 <= time4:
                 timestamp = f'{today.month}.{today.day} {time3.hour}:{time3.minute if time3.minute > 9 else f"0{time3.minute}"}'
-                cursor.execute('INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) '
-                               'VALUES (?, ?, ?, ?, ?, ?, ?)',
-                               (timestamp, today.month, today.day, time3.hour,
-                                time3.minute, week[today.weekday()], window,))
+                cursor.execute(
+                    "INSERT INTO Timetable (timestamp, month, day, hour, minute, weekday, window) "
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    (
+                        timestamp,
+                        today.month,
+                        today.day,
+                        time3.hour,
+                        time3.minute,
+                        week[today.weekday()],
+                        window,
+                    ),
+                )
                 time3 += datetime.timedelta(minutes=5)
                 if window < 3:
                     window += 1

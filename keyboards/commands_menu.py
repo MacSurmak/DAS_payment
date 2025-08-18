@@ -12,17 +12,17 @@ from lexicon.lexicon import lexicon
 
 
 async def set_commands_menu(bot: Bot):
-    main_menu_commands = [BotCommand(
-        command=command,
-        description=description
-    ) for command,
-        description in LEXICON_COMMANDS.items()]
+    main_menu_commands = [
+        BotCommand(command=command, description=description)
+        for command, description in LEXICON_COMMANDS.items()
+    ]
     await bot.set_my_commands(main_menu_commands)
 
 
 def yesno_markup() -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=lexicon(key), callback_data=key) for key in ['_yes', '_no']
+        InlineKeyboardButton(text=lexicon(key), callback_data=key)
+        for key in ["_yes", "_no"]
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(*buttons, width=2)
@@ -31,110 +31,132 @@ def yesno_markup() -> InlineKeyboardMarkup:
 
 def degree_markup() -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=lexicon(key), callback_data=f'degree_{key}') for key in ['bachelor', 'master', 'specialist']
+        InlineKeyboardButton(text=lexicon(key), callback_data=f"degree_{key}")
+        for key in ["bachelor", "master", "specialist"]
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(*buttons, width=2).row(InlineKeyboardButton(text=lexicon('back'), callback_data='back_degree'))
+    kb_builder.row(*buttons, width=2).row(
+        InlineKeyboardButton(text=lexicon("back"), callback_data="back_degree")
+    )
     return kb_builder.as_markup(resize_keyboard=True)
 
 
 def year_markup(length) -> InlineKeyboardMarkup:
     buttons: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=f'{i + 1} курс', callback_data=f'{i + 1}_year') for i in range(length)
+        InlineKeyboardButton(text=f"{i + 1} курс", callback_data=f"{i + 1}_year")
+        for i in range(length)
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(*buttons, width=2).row(InlineKeyboardButton(text=lexicon('back'), callback_data='back_year'))
+    kb_builder.row(*buttons, width=2).row(
+        InlineKeyboardButton(text=lexicon("back"), callback_data="back_year")
+    )
     return kb_builder.as_markup(resize_keyboard=True)
 
 
 def faculty_markup() -> InlineKeyboardMarkup:
     buttons_long: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['bio', 'geo', 'jou',
-                                                                                            'ist', 'pol', 'soi',
-                                                                                            'psy', 'phd', 'eco']
+        InlineKeyboardButton(text=lexicon(key), callback_data=f"faculty_{key}")
+        for key in ["bio", "geo", "jou", "ist", "pol", "soi", "psy", "phd", "eco"]
     ]
     buttons_short: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=lexicon(key), callback_data=f'faculty_{key}') for key in ['kpu', 'ssn', 'isa',
-                                                                                            'fbb', 'ffm', 'fhi',
-                                                                                            'oth']
+        InlineKeyboardButton(text=lexicon(key), callback_data=f"faculty_{key}")
+        for key in ["kpu", "ssn", "isa", "fbb", "ffm", "fhi", "oth"]
     ]
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
     kb_builder.row(*buttons_long, width=2).row(*buttons_short, width=3)
     return kb_builder.as_markup(resize_keyboard=True)
 
+
 def calendar_markup(month, window) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
+    kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data="_empty"))
     buttons_weekdays: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=day, callback_data='_empty') for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+        InlineKeyboardButton(text=day, callback_data="_empty")
+        for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
     ]
     kb_builder.row(*buttons_weekdays, width=7)
 
     obj = calendar.Calendar()
     days = obj.itermonthdates(2024, month)
 
-    result = read(table='Lastday',
-                  columns='month, day',
-                  fetch=1)
+    result = read(table="Lastday", columns="month, day", fetch=1)
 
     last_day = date(year=2024, month=result[0], day=result[1])
 
     buttons_days: list[InlineKeyboardButton] = []
     for day in days:
         if day.month == month:
-            times = read(table='Timetable',
-                         columns='hour, minute',
-                         month=day.month,
-                         day=day.day,
-                         window=window,
-                         signed=0)
+            times = read(
+                table="Timetable",
+                columns="hour, minute",
+                month=day.month,
+                day=day.day,
+                window=window,
+                signed=0,
+            )
 
             if day > last_day or day < date.today():
-                sym = '✖'
-                code = 'no'
-            elif (0,) in read(table='Timetable',
-                              columns='signed',
-                              month=day.month,
-                              day=day.day,
-                              window=window):
-                sym = '✅'
-                code = 'yes'
+                sym = "✖"
+                code = "no"
+            elif (0,) in read(
+                table="Timetable",
+                columns="signed",
+                month=day.month,
+                day=day.day,
+                window=window,
+            ):
+                sym = "✅"
+                code = "yes"
             else:
-                sym = '✖'
-                code = 'no'
-            buttons_days.append(InlineKeyboardButton(text=str(day.day) + sym, callback_data=f'day_{code}_{day.day}-{day.month}'))
+                sym = "✖"
+                code = "no"
+            buttons_days.append(
+                InlineKeyboardButton(
+                    text=str(day.day) + sym,
+                    callback_data=f"day_{code}_{day.day}-{day.month}",
+                )
+            )
         else:
-            buttons_days.append(InlineKeyboardButton(text=' ', callback_data=f'empty_{day}-{month}'))
+            buttons_days.append(
+                InlineKeyboardButton(text=" ", callback_data=f"empty_{day}-{month}")
+            )
 
     kb_builder.row(*buttons_days, width=7)
 
     if month == datetime.today().month:
-        kb_builder.row(InlineKeyboardButton(text=lexicon('next'),
-                                            callback_data=f'calendar_next'))
+        kb_builder.row(
+            InlineKeyboardButton(text=lexicon("next"), callback_data=f"calendar_next")
+        )
     else:
-        kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
-                                            callback_data=f'calendar_back'))
+        kb_builder.row(
+            InlineKeyboardButton(text=lexicon("back"), callback_data=f"calendar_back")
+        )
 
     return kb_builder.as_markup(resize_keyboard=True)
 
 
 def day_markup(timestamp, window) -> InlineKeyboardMarkup:
-    day = int(timestamp.split('-')[0])
-    month = int(timestamp.split('-')[1])
+    day = int(timestamp.split("-")[0])
+    month = int(timestamp.split("-")[1])
 
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(InlineKeyboardButton(text=f"{day} {lexicon(f'{month}')}", callback_data='_empty'))
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=f"{day} {lexicon(f'{month}')}", callback_data="_empty"
+        )
+    )
 
     times = []
-    times_t = read(table='Timetable',
-                 columns='hour, minute, signed',
-                 month=month,
-                 day=day,
-                 window=window)
+    times_t = read(
+        table="Timetable",
+        columns="hour, minute, signed",
+        month=month,
+        day=day,
+        window=window,
+    )
     for t in times_t:
         times.append(t)
     times.sort()
-
 
     buttons_times: list[InlineKeyboardButton] = []
 
@@ -148,34 +170,40 @@ def day_markup(timestamp, window) -> InlineKeyboardMarkup:
         # dt = datetime(year=2024, month=month, day=day, hour=hour, minute=minute)
 
         if signed == 0:
-            sym = '✅'
+            sym = "✅"
         else:
-            sym = '✖'
+            sym = "✖"
 
-        buttons_times.append(InlineKeyboardButton(text=f"{hour}:{minute if minute > 9 else f'0{minute}'}{sym}",
-                                                  callback_data=f"time_{month}:{day}:{hour}:{minute if minute > 9 else f'0{minute}'}"))
+        buttons_times.append(
+            InlineKeyboardButton(
+                text=f"{hour}:{minute if minute > 9 else f'0{minute}'}{sym}",
+                callback_data=f"time_{month}:{day}:{hour}:{minute if minute > 9 else f'0{minute}'}",
+            )
+        )
 
     kb_builder.row(*buttons_times, width=3)
 
-    kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
-                                        callback_data=f'back_to_calendar_{month}'))
+    kb_builder.row(
+        InlineKeyboardButton(
+            text=lexicon("back"), callback_data=f"back_to_calendar_{month}"
+        )
+    )
     return kb_builder.as_markup(resize_keyboard=True)
 
 
 def calendar_markup_admin(month) -> InlineKeyboardMarkup:
     kb_builder: InlineKeyboardBuilder = InlineKeyboardBuilder()
-    kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data='_empty'))
+    kb_builder.row(InlineKeyboardButton(text=lexicon(month), callback_data="_empty"))
     buttons_weekdays: list[InlineKeyboardButton] = [
-        InlineKeyboardButton(text=day, callback_data='_empty') for day in ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
+        InlineKeyboardButton(text=day, callback_data="_empty")
+        for day in ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"]
     ]
     kb_builder.row(*buttons_weekdays, width=7)
 
     obj = calendar.Calendar()
     days = obj.itermonthdates(2024, month)
 
-    result = read(table='Lastday',
-                  columns='month, day',
-                  fetch=1)
+    result = read(table="Lastday", columns="month, day", fetch=1)
 
     last_day = date(year=2024, month=result[0], day=result[1])
 
@@ -183,28 +211,40 @@ def calendar_markup_admin(month) -> InlineKeyboardMarkup:
     for day in days:
         if day.month == month:
             if day > last_day or day < date.today():
-                sym = ''
-                code = 'no'
-            elif last_day >= day >= date.today() and read(table='Timetable',
-                                                          columns='signed',
-                                                          month=day.month,
-                                                          day=day.day):
-                sym = '✅'
-                code = 'yes'
+                sym = ""
+                code = "no"
+            elif last_day >= day >= date.today() and read(
+                table="Timetable", columns="signed", month=day.month, day=day.day
+            ):
+                sym = "✅"
+                code = "yes"
             else:
-                sym = ''
-                code = 'no'
-            buttons_days.append(InlineKeyboardButton(text=str(day.day) + sym, callback_data=f'open_{code}_{day.day}-{day.month}'))
+                sym = ""
+                code = "no"
+            buttons_days.append(
+                InlineKeyboardButton(
+                    text=str(day.day) + sym,
+                    callback_data=f"open_{code}_{day.day}-{day.month}",
+                )
+            )
         else:
-            buttons_days.append(InlineKeyboardButton(text=' ', callback_data=f'empty_{day}-{month}'))
+            buttons_days.append(
+                InlineKeyboardButton(text=" ", callback_data=f"empty_{day}-{month}")
+            )
 
     kb_builder.row(*buttons_days, width=7)
 
     if month == datetime.today().month:
-        kb_builder.row(InlineKeyboardButton(text=lexicon('next'),
-                                            callback_data=f'admin_calendar_next'))
+        kb_builder.row(
+            InlineKeyboardButton(
+                text=lexicon("next"), callback_data=f"admin_calendar_next"
+            )
+        )
     else:
-        kb_builder.row(InlineKeyboardButton(text=lexicon('back'),
-                                            callback_data=f'admin_calendar_back'))
+        kb_builder.row(
+            InlineKeyboardButton(
+                text=lexicon("back"), callback_data=f"admin_calendar_back"
+            )
+        )
 
     return kb_builder.as_markup(resize_keyboard=True)
