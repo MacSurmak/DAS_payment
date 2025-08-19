@@ -10,11 +10,12 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from config_data import config
 from database.models import User
 from dialogs.admin_dialog import AdminSG
+from dialogs.booking_management_dialog import BookingManagementSG
 from dialogs.registration_dialog import RegistrationSG
 from dialogs.schedule_dialog import ScheduleSG
 from filters.filters import IsAdmin, IsRegistered
 from lexicon import lexicon
-from services.schedule_service import cancel_booking, get_user_booking
+from services.schedule_service import get_user_booking
 
 commands_router = Router(name="commands-router")
 
@@ -35,22 +36,17 @@ async def start_registered_user(
     user: User,
     lang: str,
 ):
-    """Handles the /start command for registered users."""
+    """
+    Handles the /start command for registered users.
+    Starts booking management or a new booking process.
+    """
     logger.info(f"Registered user {user.telegram_id} used /start.")
 
     booking = await get_user_booking(session, user)
 
     if booking:
-        dt = booking.booking_datetime
-        await message.answer(
-            lexicon(
-                lang,
-                "start_already_booked",
-                date=dt.strftime("%d.%m.%Y"),
-                time=dt.strftime("%H:%M"),
-                weekday=lexicon(lang, f"weekday_{dt.weekday()}"),
-                window=booking.window_number,
-            )
+        await dialog_manager.start(
+            BookingManagementSG.view_booking, mode=StartMode.RESET_STACK
         )
     else:
         await message.answer(lexicon(lang, "start_registered_user"))
@@ -63,30 +59,6 @@ async def process_help_command(message: Message, lang: str):
     await message.answer(lexicon(lang, "help_command"))
 
 
-@commands_router.message(Command("cancel"), IsRegistered())
-async def process_cancel_command(
-    message: Message, session: AsyncSession, user: User, lang: str
-):
-    """Handles the /cancel command."""
-    booking = await get_user_booking(session, user)
-
-    if not booking:
-        await message.answer(lexicon(lang, "cancel_no_booking"))
-        return
-
-    was_cancelled, reason = await cancel_booking(session, user)
-
-    if was_cancelled:
-        logger.info(f"User {user.telegram_id} cancelled their booking.")
-        await message.answer(lexicon(lang, "cancel_successful"))
-    else:
-        logger.warning(
-            f"User {user.telegram_id} failed to cancel booking. Reason: {reason}"
-        )
-        if reason == "too_late":
-            await message.answer(lexicon(lang, "cancel_failed_too_late"))
-
-
 @commands_router.message(Command("admin"), F.text.regexp(r"/admin (.+)"))
 async def process_admin_command(
     message: Message, session: AsyncSession, user: User | None, lang: str
@@ -94,7 +66,7 @@ async def process_admin_command(
     """Handles the /admin command to grant admin rights."""
     password = message.text.split(" ", 1)[1]
 
-    if not user:  # Should not happen for registered users, but as a safeguard
+    if not user:
         await message.answer(lexicon(lang, "admin_not_registered"))
         return
 
