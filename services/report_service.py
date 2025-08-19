@@ -8,14 +8,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
 from database.models import Booking, User
+from lexicon import lexicon
 
 
-async def generate_excel_report(session: AsyncSession) -> str:
+async def generate_excel_report(session: AsyncSession, lang: str) -> str:
     """
     Generates an Excel report of all bookings.
 
     Args:
         session: The database session.
+        lang: The language code for localization.
 
     Returns:
         The file path to the generated Excel file.
@@ -63,7 +65,7 @@ async def generate_excel_report(session: AsyncSession) -> str:
                         "Имя": user.first_name,
                         "Отчество": user.patronymic or "",
                         "Факультет": user.faculty.name if user.faculty else "N/A",
-                        "Программа": user.degree,
+                        "Программа": lexicon(lang, user.degree),
                         "Курс": user.year,
                     }
                 )

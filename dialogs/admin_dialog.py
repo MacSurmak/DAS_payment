@@ -2,7 +2,7 @@ import datetime
 import os
 
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery, Message, FSInputFile
+from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Calendar, Group, SwitchTo
@@ -46,16 +46,16 @@ async def on_get_report_click(
     session: AsyncSession = dialog_manager.middleware_data["session"]
     lang = dialog_manager.middleware_data.get("lang")
     await callback.answer(lexicon(lang, "report_generation_started"), show_alert=False)
-
+    file_path = None
     try:
-        file_path = await generate_excel_report(session)
+        file_path = await generate_excel_report(session, lang)
         await callback.message.answer_document(FSInputFile(file_path))
         logger.info(f"Admin {callback.from_user.id} generated a report.")
     except Exception as e:
         logger.exception("Failed to generate report.")
         await callback.message.answer(lexicon(lang, "report_generation_failed"))
     finally:
-        if "file_path" in locals() and os.path.exists(file_path):
+        if file_path and os.path.exists(file_path):
             os.remove(file_path)
 
 

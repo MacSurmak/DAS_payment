@@ -1,7 +1,7 @@
 import asyncio
 import os
-import time
 import urllib
+from zoneinfo import ZoneInfo
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
@@ -28,9 +28,6 @@ from services import (
     send_notifications,
     setup_logger,
 )
-
-os.environ["TZ"] = "Europe/Moscow"
-# time.tzset()
 
 
 async def main() -> None:
@@ -78,7 +75,7 @@ async def main() -> None:
     setup_dialogs(dp)
 
     # --- Scheduler Setup ---
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
+    scheduler = AsyncIOScheduler(timezone=ZoneInfo("Europe/Moscow"))
     scheduler.add_job(
         send_notifications,
         "cron",

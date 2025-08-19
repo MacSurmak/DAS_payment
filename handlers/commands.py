@@ -57,6 +57,12 @@ async def start_registered_user(
         await dialog_manager.start(ScheduleSG.date_select, mode=StartMode.RESET_STACK)
 
 
+@commands_router.message(Command("help"))
+async def process_help_command(message: Message, lang: str):
+    """Handles the /help command."""
+    await message.answer(lexicon(lang, "help_command"))
+
+
 @commands_router.message(Command("cancel"), IsRegistered())
 async def process_cancel_command(
     message: Message, session: AsyncSession, user: User, lang: str
