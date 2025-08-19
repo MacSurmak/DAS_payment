@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: das-scheduler
-          image: your_dockerhub_username/das-payment-bot:latest # Use the same image as the bot
+          image: macsurmak/das-payment-bot:latest # Use the same image as the bot
           imagePullPolicy: Always
           command: ["python3", "scheduler.py"] # Override the default command
           envFrom:
