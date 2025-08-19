@@ -1,6 +1,8 @@
-from .admin_service import (
-    block_day_in_schedule,
+from .admin_actions import (
     broadcast_message,
+    create_non_working_day,
+    create_schedule_exception,
+    delete_schedule_exception,
     get_statistics,
 )
 from .initial_data_service import (
@@ -31,5 +33,7 @@ __all__ = [
     "generate_excel_report",
     "broadcast_message",
     "send_notifications",
-    "block_day_in_schedule",
+    "create_non_working_day",
+    "create_schedule_exception",
+    "delete_schedule_exception",
 ]

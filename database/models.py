@@ -1,6 +1,7 @@
 import datetime
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     Column,
@@ -125,22 +126,35 @@ class LastDay(Base):
 
 
 class ScheduleException(Base):
-    """Represents an exception to the regular timetable, e.g., a holiday."""
+    """
+    Represents an exception to the default schedule for a given period.
+    This single model handles non-working days, modifications to existing slots,
+    and restrictions by year of study.
+    """
 
     __tablename__ = "schedule_exceptions"
 
     exception_id = Column(Integer, Identity(), primary_key=True)
-    exception_date = Column(Date, nullable=False)
-    start_time = Column(Time, nullable=False)
-    end_time = Column(Time, nullable=False)
-    window_number = Column(Integer, nullable=False)  # 0 for all windows
-    is_working = Column(
-        Boolean, default=False, nullable=False
-    )  # False = day off, True = special working hours
+    description = Column(String(255), nullable=False)
+    start_date = Column(Date, nullable=False, index=True)
+    end_date = Column(Date, nullable=False, index=True)
+    is_active = Column(Boolean, default=True, nullable=False, index=True)
+    priority = Column(Integer, default=0, nullable=False, index=True)
+
+    # Type of exception
+    is_non_working = Column(Boolean, default=False, nullable=False)
+
+    # Fields for modification-type exceptions
+    target_days_of_week = Column(JSON, nullable=True)  # [0, 2, 4]
+    target_start_time = Column(Time, nullable=True)  # Identifies block to modify
+    new_start_time = Column(Time, nullable=True)
+    new_end_time = Column(Time, nullable=True)
+    start_window_override = Column(Integer, nullable=True)  # e.g., start with win 2
+    allowed_years = Column(JSON, nullable=True)  # [1] for 1st year only
 
     __table_args__ = (
-        Index("ix_exception_date_window", "exception_date", "window_number"),
+        Index("ix_active_exceptions_by_date", "start_date", "end_date", "is_active"),
     )
 
     def __repr__(self) -> str:
-        return f"<ScheduleException(id={self.exception_id}, date='{self.exception_date}', window={self.window_number}, working={self.is_working})>"
+        return f"<ScheduleException(id={self.exception_id}, desc='{self.description}')>"
