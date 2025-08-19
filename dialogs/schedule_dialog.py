@@ -1,9 +1,12 @@
+import dataclasses
 import datetime
+from typing import Dict, List
 
 from aiogram.fsm.state import State, StatesGroup
-from aiogram.types import CallbackQuery
+from aiogram.types import CallbackQuery, InlineKeyboardButton
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
+from aiogram_dialog.widgets.kbd.calendar_kbd import CalendarConfig
 from aiogram_dialog.widgets.text import Const, Format
 from loguru import logger
 from magic_filter import F
@@ -20,6 +23,28 @@ class ScheduleSG(StatesGroup):
     date_select = State()
     time_select = State()
     confirm = State()
+
+
+class BoundedCalendar(Calendar):
+    """A calendar widget with dynamically set min/max dates from getter data."""
+
+    async def _render_kbd(
+        self, data: Dict, manager: DialogManager
+    ) -> List[List[InlineKeyboardButton]]:
+        min_date = data.get("min_date")
+        max_date = data.get("max_date")
+
+        # Create a new config for this render pass, inheriting from the original
+        render_config = dataclasses.replace(
+            self._config, min_date=min_date, max_date=max_date
+        )
+
+        # Temporarily swap config for the render call
+        original_config = self._config
+        self._config = render_config
+        kbd = await super()._render_kbd(data, manager)
+        self._config = original_config  # Restore it to prevent side-effects
+        return kbd
 
 
 # --- Getters ---
@@ -112,12 +137,7 @@ async def on_booking_confirm(
 schedule_dialog = Dialog(
     Window(
         LocalizedTextFormat("get_date_prompt"),
-        Calendar(
-            id="calendar",
-            on_click=on_date_selected,
-            min_date_getter=lambda data: data["min_date"],
-            max_date_getter=lambda data: data["max_date"],
-        ),
+        BoundedCalendar(id="calendar", on_click=on_date_selected),
         state=ScheduleSG.date_select,
         getter=get_dates_data,
     ),

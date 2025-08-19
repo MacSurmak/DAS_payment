@@ -1,7 +1,7 @@
 import asyncio
-import urllib
 import os
 import time
+import urllib
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
@@ -15,7 +15,7 @@ from config_data import config
 from database.base import Base
 from dialogs import admin_dialog, registration_dialog, schedule_dialog
 from handlers import commands_router, messages_router
-from keyboards.commands_menu import set_main_menu
+from keyboards import set_main_menu
 from middlewares import (
     DbSessionMiddleware,
     GetLangMiddleware,
@@ -25,8 +25,8 @@ from services import (
     populate_initial_faculties,
     populate_initial_lastday,
     populate_initial_timetable,
-    setup_logger,
     send_notifications,
+    setup_logger,
 )
 
 os.environ["TZ"] = "Europe/Moscow"

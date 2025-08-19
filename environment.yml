@@ -1,0 +1,34 @@
+# --- Conda environment specification for DAS Payment Bot ---
+# To create the environment: conda env create -f environment.yml
+# To update the environment: conda env update -f environment.yml --prune
+# To activate: conda activate das_payment_env
+
+name: das_payment_env
+
+channels:
+  - conda-forge  # Наиболее полный репозиторий пакетов
+  - defaults
+
+dependencies:
+  # --- Python Version ---
+  - python=3.13
+
+  # --- Core Conda Dependencies ---
+  # Устанавливаем через Conda, так как они могут иметь сложные
+  # не-Python зависимости, с которыми Conda справляется лучше.
+  - sqlalchemy
+  - asyncpg
+  - redis-py      # Conda-аналог для 'redis'
+  - loguru
+  - environs
+  - pandas
+  - openpyxl
+  - apscheduler
+
+  # --- Pip Dependencies ---
+  # Пакеты, которые специфичны для Python, часто обновляются
+  # или лучше брать напрямую из PyPI.
+  - pip
+  - pip:
+    - aiogram
+    - aiogram_dialog
