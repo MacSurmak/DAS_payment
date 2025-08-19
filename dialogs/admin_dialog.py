@@ -12,6 +12,7 @@ from aiogram_dialog.widgets.kbd import (
     Calendar,
     Group,
     Multiselect,
+    Radio,
     Row,
     ScrollingGroup,
     Select,
@@ -52,6 +53,7 @@ class AdminSG(StatesGroup):
     add_exception_target_slot = State()
     add_exception_new_times = State()
     add_exception_years = State()
+    add_exception_year_behavior = State()
     add_exception_start_window = State()
     add_exception_confirm = State()
 
@@ -110,6 +112,9 @@ async def get_add_confirmation_data(dialog_manager: DialogManager, **kwargs) -> 
         4: lexicon(lang, "weekday_4_short"),
     }
     selected_days = [days_map[int(d)] for d in data.get("days_of_week", [])]
+    behavior_key = (
+        "exclusive" if data.get("block_others_if_years_mismatch") else "modifier"
+    )
 
     return {
         "description": data.get("description"),
@@ -120,6 +125,7 @@ async def get_add_confirmation_data(dialog_manager: DialogManager, **kwargs) -> 
         "new_times": data.get("new_times_str", lexicon(lang, "not_applicable")),
         "years": ", ".join(map(str, data.get("years", [])))
         or lexicon(lang, "all_years"),
+        "year_behavior": lexicon(lang, f"year_behavior_{behavior_key}"),
         "start_window": data.get("start_window") or lexicon(lang, "not_changed"),
     }
 
@@ -322,7 +328,9 @@ async def on_years_input(
     lang = dialog_manager.middleware_data.get("lang")
     if not text.strip():  # Empty input means all years
         dialog_manager.dialog_data["years"] = []
-        await dialog_manager.next()
+        dialog_manager.dialog_data["block_others_if_years_mismatch"] = False
+        # If no years are specified, the blocking logic is irrelevant, so we skip the next step.
+        await dialog_manager.switch_to(AdminSG.add_exception_start_window)
         return
 
     try:
@@ -333,6 +341,16 @@ async def on_years_input(
         await dialog_manager.next()
     except (ValueError, TypeError):
         await message.answer(lexicon(lang, "admin_years_format_error"))
+
+
+async def on_year_behavior_selected(
+    callback: CallbackQuery, widget: Radio, dialog_manager: DialogManager, item_id: str
+):
+    """Handles selection of how the year filter should behave."""
+    dialog_manager.dialog_data["block_others_if_years_mismatch"] = (
+        item_id == "exclusive"
+    )
+    await dialog_manager.next()
 
 
 async def on_start_window_selected(
@@ -590,6 +608,22 @@ admin_dialog = Dialog(
         TextInput(id="years_input", on_success=on_years_input),
         Back(LocalizedTextFormat("back_button")),
         state=AdminSG.add_exception_years,
+    ),
+    Window(
+        LocalizedTextFormat("admin_exception_year_behavior_prompt"),
+        Radio(
+            Format("🔘 {item[0]}"),
+            Format("⚪️ {item[0]}"),
+            id="year_behavior_radio",
+            item_id_getter=lambda item: item[1],
+            items=[
+                (lexicon("ru", "year_behavior_modifier_text"), "modifier"),
+                (lexicon("ru", "year_behavior_exclusive_text"), "exclusive"),
+            ],
+            on_click=on_year_behavior_selected,
+        ),
+        Back(LocalizedTextFormat("back_button")),
+        state=AdminSG.add_exception_year_behavior,
     ),
     Window(
         LocalizedTextFormat("admin_exception_start_window_prompt"),

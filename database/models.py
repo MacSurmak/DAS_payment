@@ -151,6 +151,9 @@ class ScheduleException(Base):
     new_end_time = Column(Time, nullable=True)
     start_window_override = Column(Integer, nullable=True)  # e.g., start with win 2
     allowed_years = Column(JSON, nullable=True)  # [1] for 1st year only
+    # If True, users whose year is NOT in `allowed_years` will be blocked.
+    # If False, the rule simply won't apply to them.
+    block_others_if_years_mismatch = Column(Boolean, default=False, nullable=False)
 
     __table_args__ = (
         Index("ix_active_exceptions_by_date", "start_date", "end_date", "is_active"),

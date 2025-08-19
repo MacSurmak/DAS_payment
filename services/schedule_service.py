@@ -46,9 +46,9 @@ async def get_available_slots(
     """
     Generates available slots using a unified exception-based system.
     1. Fetches all active exceptions for the target date.
-    2. Checks for a high-priority 'non-working' rule.
-    3. If no 'non-working' rule, gets the base schedule from TimetableSlots.
-    4. Applies any 'modification' exceptions to the base schedule.
+    2. Performs a preliminary check for 'exclusive' rules that block the user.
+    3. Checks for a high-priority 'non-working' rule.
+    4. If not blocked, gets the base schedule and applies modifications.
     5. Generates and filters slots based on the final, calculated schedule.
     """
     # --- Validation Layer ---
@@ -60,6 +60,7 @@ async def get_available_slots(
         return []
 
     # 1. Fetch all active exceptions for the date, ordered by priority.
+    day_of_week = target_date.weekday()
     stmt_exceptions = (
         select(ScheduleException)
         .where(
@@ -71,13 +72,21 @@ async def get_available_slots(
     )
     exceptions = (await session.scalars(stmt_exceptions)).all()
 
-    # 2. Check for a 'non-working' rule. The highest priority one will be first.
+    # 2. Preliminary check for 'exclusive' year-based rules.
+    for exc in exceptions:
+        if exc.block_others_if_years_mismatch and exc.allowed_years:
+            if user.year not in exc.allowed_years:
+                logger.debug(
+                    f"User {user.telegram_id} blocked by exclusive year rule ID {exc.exception_id}"
+                )
+                return []  # User's year is not in the allowed list, block immediately.
+
+    # 3. Check for a 'non-working' rule. The highest priority one will be first.
     if any(e.is_non_working for e in exceptions):
         logger.debug(f"Date {target_date} is a non-working day due to an exception.")
         return []
 
-    # 3. Get the base schedule from TimetableSlots FOR THE USER'S WINDOW.
-    day_of_week = target_date.weekday()
+    # 4. Get the base schedule and prepare for modifications.
     stmt_slots = select(TimetableSlot).where(
         TimetableSlot.day_of_week == day_of_week,
         TimetableSlot.is_active == True,
@@ -85,19 +94,19 @@ async def get_available_slots(
     )
     base_slots = await session.scalars(stmt_slots)
 
-    # Prepare a mutable structure for the day's schedule
     time_blocks: List[Dict[str, datetime.time]] = [
         {"start": slot.start_time, "end": slot.end_time} for slot in base_slots
     ]
-    start_window = 1  # Default start window
+    start_window = 1
 
-    # 4. Apply 'modification' exceptions that are relevant for this specific user.
+    # Apply 'modification' exceptions that are relevant for this specific user.
     for exc in exceptions:
-        # Rule is for specific years, and this user is not one of them. Skip.
+        # Rule is for specific years, and this user is not one of them.
+        # Since we passed the 'block_others' check, this just means we skip modification.
         if exc.allowed_years and user.year not in exc.allowed_years:
             continue
 
-        # Rule is for specific days, and this is not one of them. Skip.
+        # Rule is for specific days, and this is not one of them.
         if exc.target_days_of_week and day_of_week not in exc.target_days_of_week:
             continue
 
@@ -113,7 +122,7 @@ async def get_available_slots(
                     logger.debug(f"Modifying slot {block['start']} on {target_date}")
                     block["start"] = exc.new_start_time
                     block["end"] = exc.new_end_time
-                    break  # Assume one modifier per original slot time
+                    break
 
     if not time_blocks:
         return []

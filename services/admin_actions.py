@@ -124,6 +124,9 @@ async def create_schedule_exception(
             else None
         ),
         allowed_years=data.get("years") or None,
+        block_others_if_years_mismatch=data.get(
+            "block_others_if_years_mismatch", False
+        ),
         start_window_override=data.get("start_window"),
         is_active=True,
         priority=10,  # Default priority for custom rules
