@@ -8,6 +8,7 @@ from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from config_data import config
+from database.models import User
 from dialogs.admin_dialog import AdminSG
 from dialogs.registration_dialog import RegistrationSG
 from dialogs.schedule_dialog import ScheduleSG
@@ -28,10 +29,13 @@ async def start_new_user(message: Message, dialog_manager: DialogManager, lang: 
 
 @commands_router.message(CommandStart(), IsRegistered())
 async def start_registered_user(
-    message: Message, dialog_manager: DialogManager, session: AsyncSession, lang: str
+    message: Message,
+    dialog_manager: DialogManager,
+    session: AsyncSession,
+    user: User,
+    lang: str,
 ):
     """Handles the /start command for registered users."""
-    user = dialog_manager.middleware_data["user"]
     logger.info(f"Registered user {user.telegram_id} used /start.")
 
     booking = await get_user_booking(session, user)
@@ -54,9 +58,10 @@ async def start_registered_user(
 
 
 @commands_router.message(Command("cancel"), IsRegistered())
-async def process_cancel_command(message: Message, session: AsyncSession, lang: str):
+async def process_cancel_command(
+    message: Message, session: AsyncSession, user: User, lang: str
+):
     """Handles the /cancel command."""
-    user = message.middleware_data["user"]
     booking = await get_user_booking(session, user)
 
     if not booking:
@@ -77,10 +82,11 @@ async def process_cancel_command(message: Message, session: AsyncSession, lang: 
 
 
 @commands_router.message(Command("admin"), F.text.regexp(r"/admin (.+)"))
-async def process_admin_command(message: Message, session: AsyncSession, lang: str):
+async def process_admin_command(
+    message: Message, session: AsyncSession, user: User | None, lang: str
+):
     """Handles the /admin command to grant admin rights."""
     password = message.text.split(" ", 1)[1]
-    user = message.middleware_data.get("user")
 
     if not user:  # Should not happen for registered users, but as a safeguard
         await message.answer(lexicon(lang, "admin_not_registered"))

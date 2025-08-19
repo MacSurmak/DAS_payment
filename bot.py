@@ -30,7 +30,7 @@ from services import (
 )
 
 os.environ["TZ"] = "Europe/Moscow"
-time.tzset()
+# time.tzset()
 
 
 async def main() -> None:
