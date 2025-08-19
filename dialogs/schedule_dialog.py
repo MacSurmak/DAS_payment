@@ -77,12 +77,13 @@ async def get_times_data(dialog_manager: DialogManager, **kwargs) -> dict:
 
 async def get_confirmation_data(dialog_manager: DialogManager, **kwargs) -> dict:
     """Prepares data for the confirmation window."""
+    lang = dialog_manager.middleware_data.get("lang")
     dt_iso = dialog_manager.dialog_data.get("selected_datetime")
     dt = datetime.datetime.fromisoformat(dt_iso)
     return {
         "date": dt.strftime("%d.%m.%Y"),
         "time": dt.strftime("%H:%M"),
-        "weekday": lexicon("ru", f"weekday_{dt.weekday()}"),
+        "weekday": lexicon(lang, f"weekday_{dt.weekday()}"),
     }
 
 

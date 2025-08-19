@@ -23,7 +23,7 @@ async def get_booking_data(dialog_manager: DialogManager, **kwargs):
     """Prepares data for the booking view window."""
     session: AsyncSession = dialog_manager.middleware_data["session"]
     user: User = dialog_manager.middleware_data["user"]
-    lang: str = dialog_manager.middleware_data["lang"]
+    lang: str = dialog_manager.middleware_data.get("lang")
 
     booking = await get_user_booking(session, user)
     if not booking:
@@ -47,7 +47,7 @@ async def on_cancel_booking(
     """Handles the final confirmation of booking cancellation."""
     session: AsyncSession = dialog_manager.middleware_data["session"]
     user: User = dialog_manager.middleware_data["user"]
-    lang: str = dialog_manager.middleware_data["lang"]
+    lang: str = dialog_manager.middleware_data.get("lang")
 
     was_cancelled, reason = await cancel_booking(session, user)
 

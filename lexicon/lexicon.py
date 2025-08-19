@@ -10,6 +10,10 @@ LEXICON: dict[str, dict[str, str]] = {
         "back_button": "⬅️ Назад",
         "confirm_button": "✅ Все верно",
         "close_button": "❌ Закрыть",
+        "not_applicable": "Н/Д",
+        "not_provided": "-",
+        "course_word": "курс",
+        "window_prefix_num": "Окно №{window}",
         # Weekdays
         "weekday_0": "Понедельник",
         "weekday_1": "Вторник",
@@ -93,6 +97,17 @@ LEXICON: dict[str, dict[str, str]] = {
         "admin_broadcast_confirm_prompt": "Вы уверены, что хотите отправить следующее сообщение?\n\n<pre>{broadcast_text}</pre>",
         "broadcast_started": "Начинаю рассылку...",
         "broadcast_finished": "✅ Рассылка завершена.\nОтправлено: {sent}\nНе удалось: {failed}",
+        # Report Headers
+        "report_header_window": "Окно",
+        "report_header_room141": "141 каб.",
+        "report_header_cashbox": "Касса",
+        "report_header_room137": "137 каб.",
+        "report_header_lastname": "Фамилия",
+        "report_header_firstname": "Имя",
+        "report_header_patronymic": "Отчество",
+        "report_header_faculty": "Факультет",
+        "report_header_degree": "Программа",
+        "report_header_year": "Курс",
         # Notifications
         "notification_day_before": "Привет! Напоминаем, что вы записаны на получение документов в ДАС <b>завтра в {time}</b>.\nОкно №{window}.",
         "notification_hour_before": "Привет! Напоминаем, что вы записаны на получение документов в ДАС уже <b>через час, в {time}</b>.\nОкно №{window}.",

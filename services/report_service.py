@@ -57,16 +57,25 @@ async def generate_excel_report(session: AsyncSession, lang: str) -> str:
 
                 report_data.append(
                     {
-                        "Окно": f"Окно №{booking.window_number}",
-                        "141 каб.": time1,
-                        "Касса": time2,
-                        "137 каб.": time3,
-                        "Фамилия": user.last_name,
-                        "Имя": user.first_name,
-                        "Отчество": user.patronymic or "",
-                        "Факультет": user.faculty.name if user.faculty else "N/A",
-                        "Программа": lexicon(lang, user.degree),
-                        "Курс": user.year,
+                        lexicon(lang, "report_header_window"): lexicon(
+                            lang, "window_prefix_num", window=booking.window_number
+                        ),
+                        lexicon(lang, "report_header_room141"): time1,
+                        lexicon(lang, "report_header_cashbox"): time2,
+                        lexicon(lang, "report_header_room137"): time3,
+                        lexicon(lang, "report_header_lastname"): user.last_name,
+                        lexicon(lang, "report_header_firstname"): user.first_name,
+                        lexicon(lang, "report_header_patronymic"): user.patronymic
+                        or "",
+                        lexicon(lang, "report_header_faculty"): (
+                            user.faculty.name
+                            if user.faculty
+                            else lexicon(lang, "not_applicable")
+                        ),
+                        lexicon(lang, "report_header_degree"): lexicon(
+                            lang, user.degree
+                        ),
+                        lexicon(lang, "report_header_year"): user.year,
                     }
                 )
 

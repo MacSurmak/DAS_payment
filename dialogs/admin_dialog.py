@@ -50,13 +50,14 @@ async def get_broadcast_data(dialog_manager: DialogManager, **kwargs) -> dict:
 
 async def get_block_day_data(dialog_manager: DialogManager, **kwargs) -> dict:
     """Prepares data for window selection and date display."""
+    lang = dialog_manager.middleware_data.get("lang")
     date_iso = dialog_manager.dialog_data.get("date_to_block")
     date_str = datetime.date.fromisoformat(date_iso).strftime("%d.%m.%Y")
     windows = [
-        (lexicon("ru", "admin_window_1"), 1),
-        (lexicon("ru", "admin_window_2"), 2),
-        (lexicon("ru", "admin_window_3"), 3),
-        (lexicon("ru", "admin_all_windows"), 0),
+        (lexicon(lang, "admin_window_1"), 1),
+        (lexicon(lang, "admin_window_2"), 2),
+        (lexicon(lang, "admin_window_3"), 3),
+        (lexicon(lang, "admin_all_windows"), 0),
     ]
     return {"date_to_block": date_str, "windows": windows}
 

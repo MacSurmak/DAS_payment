@@ -37,6 +37,7 @@ async def get_faculties_data(
 
 async def get_year_data(dialog_manager: DialogManager, **kwargs) -> dict[str, list]:
     """Generates a list of years based on the selected degree."""
+    lang = dialog_manager.middleware_data.get("lang")
     degree = dialog_manager.dialog_data.get("degree")
     year_map = {
         "bachelor": 4,
@@ -44,7 +45,10 @@ async def get_year_data(dialog_manager: DialogManager, **kwargs) -> dict[str, li
         "specialist": 6,
     }
     num_years = year_map.get(degree, 4)
-    return {"years": [(str(i), i) for i in range(1, num_years + 1)]}
+    course_word = lexicon(lang, "course_word")
+    return {
+        "years": [(f"{i} {course_word}", i) for i in range(1, num_years + 1)],
+    }
 
 
 async def get_confirmation_data(dialog_manager: DialogManager, **kwargs) -> dict:
@@ -58,8 +62,10 @@ async def get_confirmation_data(dialog_manager: DialogManager, **kwargs) -> dict
     data = {
         "last_name": dialog_manager.dialog_data.get("last_name"),
         "first_name": dialog_manager.dialog_data.get("first_name"),
-        "patronymic": dialog_manager.dialog_data.get("patronymic", "-"),
-        "faculty": faculty.name if faculty else "N/A",
+        "patronymic": dialog_manager.dialog_data.get(
+            "patronymic", lexicon(lang, "not_provided")
+        ),
+        "faculty": faculty.name if faculty else lexicon(lang, "not_applicable"),
         "degree": lexicon(lang, dialog_manager.dialog_data.get("degree")),
         "year": dialog_manager.dialog_data.get("year"),
     }
@@ -185,7 +191,7 @@ registration_dialog = Dialog(
         LocalizedTextFormat("get_year_prompt"),
         Group(
             Select(
-                Format("{item[0]} курс"),
+                Format("{item[0]}"),
                 id="year_select",
                 item_id_getter=lambda item: item[1],
                 items="years",
