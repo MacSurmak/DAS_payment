@@ -64,39 +64,27 @@ class GetLangMiddleware(BaseMiddleware):
 
 
 class MessageThrottlingMiddleware(BaseMiddleware):
-    """Limits the frequency of messages from a user."""
-
-    def __init__(self, storage: RedisStorage, rate_limit: float = 0.7):
+    def __init__(self, storage: RedisStorage):
         self.storage = storage
-        self.rate_limit = rate_limit
 
-    async def __call__(
-        self,
-        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
-        event: Message,
-        data: Dict[str, Any],
-    ) -> Any:
-        user = data.get("event_from_user")
-        if not user:
-            return await handler(event, data)
+    async def __call__(self,
+                       handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+                       event: Message,
+                       data: Dict[str, Any]) -> Any:
 
-        key = f"throttle:{user.id}"
-        now = time.monotonic()
-        last_time_str = await self.storage.redis.get(key)
+        user = str(event.from_user.id)
+        check_user = await self.storage.redis.get(name=user)
 
-        if last_time_str:
-            try:
-                last_time = float(last_time_str.decode())
-                elapsed = now - last_time
-                if elapsed < self.rate_limit:
-                    lang = data.get("lang", DEFAULT_LANG)
-                    warn_key = f"throttle_warn:{user.id}"
-                    if not await self.storage.redis.get(warn_key):
-                        await event.answer(lexicon(lang, "throttling_warning"))
-                        await self.storage.redis.set(warn_key, "1", ex=5)
-                    return
-            except (ValueError, TypeError) as e:
-                logger.error(f"Error decoding throttle time for user {user.id}: {e}")
+        if check_user:
+            if int(check_user.decode()) == 1:
+                await self.storage.redis.set(name=user, value=2, ex=3)
+                return await handler(event, data)
+            elif int(check_user.decode()) == 2:
+                await self.storage.redis.set(name=user, value=3, ex=10)
+                lang = data.get("lang", DEFAULT_LANG)
+                return await event.answer(lexicon(lang, "throttling_warning"))
+            elif int(check_user.decode()) == 3:
+                return
 
-        await self.storage.redis.set(key, str(now), ex=int(self.rate_limit * 2) + 1)
+        await self.storage.redis.set(name=user, value=1, ex=3)
         return await handler(event, data)
