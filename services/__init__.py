@@ -1,4 +1,8 @@
-from .admin_service import broadcast_message, get_statistics
+from .admin_service import (
+    block_day_in_schedule,
+    broadcast_message,
+    get_statistics,
+)
 from .initial_data_service import (
     populate_initial_faculties,
     populate_initial_lastday,
@@ -27,4 +31,5 @@ __all__ = [
     "generate_excel_report",
     "broadcast_message",
     "send_notifications",
+    "block_day_in_schedule",
 ]

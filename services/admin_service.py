@@ -1,10 +1,13 @@
+import datetime
+from typing import List
+
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
 from loguru import logger
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import User
+from database.models import ScheduleException, User
 
 
 async def get_statistics(session: AsyncSession) -> dict[str, int]:
@@ -60,3 +63,29 @@ async def broadcast_message(
             failed_count += 1
 
     return sent_count, failed_count
+
+
+async def block_day_in_schedule(
+    session: AsyncSession, target_date: datetime.date, windows: List[int]
+):
+    """
+    Creates ScheduleException records to make a day non-working.
+
+    Args:
+        session: The database session.
+        target_date: The date to block.
+        windows: A list of window numbers to block.
+    """
+    exceptions = []
+    for window_num in windows:
+        exception = ScheduleException(
+            exception_date=target_date,
+            start_time=datetime.time(0, 0),
+            end_time=datetime.time(23, 59),
+            window_number=window_num,
+            is_working=False,
+        )
+        exceptions.append(exception)
+
+    session.add_all(exceptions)
+    await session.commit()

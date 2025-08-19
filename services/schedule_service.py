@@ -2,11 +2,11 @@ import datetime
 from typing import List, Tuple
 
 from loguru import logger
-from sqlalchemy import and_, func, select
+from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models import Booking, Faculty, TimetableSlot, User
+from database.models import Booking, Faculty, ScheduleException, TimetableSlot, User
 
 
 async def get_user_booking(session: AsyncSession, user: User) -> Booking | None:
@@ -46,7 +46,19 @@ async def get_available_slots(
     result_bookings = await session.scalars(stmt_bookings)
     booked_times = {b.replace(tzinfo=None) for b in result_bookings.all()}
 
-    # 3. Generate all potential slots and filter out booked ones
+    # 3. Get all blocking exceptions for this window (or all windows) and date
+    stmt_exceptions = select(ScheduleException).where(
+        ScheduleException.exception_date == target_date,
+        or_(
+            ScheduleException.window_number == window,
+            ScheduleException.window_number == 0,
+        ),
+        ScheduleException.is_working == False,
+    )
+    result_exceptions = await session.scalars(stmt_exceptions)
+    exceptions = result_exceptions.all()
+
+    # 4. Generate all potential slots and filter out booked and blocked ones
     available_slots = []
     now = datetime.datetime.now()
 
@@ -55,7 +67,20 @@ async def get_available_slots(
         end_time = datetime.datetime.combine(target_date, block.end_time)
 
         while current_time < end_time:
-            if current_time > now and current_time not in booked_times:
+            # Check if the current slot is inside any exception block
+            is_blocked = False
+            for exc in exceptions:
+                exc_start_dt = datetime.datetime.combine(target_date, exc.start_time)
+                exc_end_dt = datetime.datetime.combine(target_date, exc.end_time)
+                if exc_start_dt <= current_time < exc_end_dt:
+                    is_blocked = True
+                    break
+
+            if (
+                current_time > now
+                and current_time not in booked_times
+                and not is_blocked
+            ):
                 available_slots.append(current_time)
             current_time += datetime.timedelta(minutes=5)
 

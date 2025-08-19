@@ -5,14 +5,18 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.input import MessageInput
-from aiogram_dialog.widgets.kbd import Button, Calendar, Group, SwitchTo
+from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from loguru import logger
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import LastDay
 from lexicon import LocalizedTextFormat, lexicon
-from services.admin_service import broadcast_message, get_statistics
+from services.admin_service import (
+    block_day_in_schedule,
+    broadcast_message,
+    get_statistics,
+)
 from services.report_service import generate_excel_report
 
 
@@ -23,6 +27,9 @@ class AdminSG(StatesGroup):
     set_last_day = State()
     broadcast_text = State()
     broadcast_confirm = State()
+    schedule_management = State()
+    block_day_select_date = State()
+    block_day_select_window = State()
 
 
 # --- Getters ---
@@ -36,6 +43,18 @@ async def get_stats_data(dialog_manager: DialogManager, **kwargs) -> dict:
 async def get_broadcast_data(dialog_manager: DialogManager, **kwargs) -> dict:
     """Gets the broadcast message text for confirmation."""
     return {"broadcast_text": dialog_manager.dialog_data.get("broadcast_text", "")}
+
+
+async def get_block_day_data(dialog_manager: DialogManager, **kwargs) -> dict:
+    date_iso = dialog_manager.dialog_data.get("date_to_block")
+    date_str = datetime.date.fromisoformat(date_iso).strftime("%d.%m.%Y")
+    windows = [
+        (lexicon("ru", "admin_window_1"), 1),
+        (lexicon("ru", "admin_window_2"), 2),
+        (lexicon("ru", "admin_window_3"), 3),
+        (lexicon("ru", "admin_all_windows"), 0),
+    ]
+    return {"date_to_block": date_str, "windows": windows}
 
 
 # --- Handlers ---
@@ -115,8 +134,50 @@ async def on_broadcast_confirm(
         await dialog_manager.switch_to(AdminSG.main_menu)
 
 
+# --- Schedule Management Handlers ---
+
+
+async def on_date_to_block_selected(
+    callback: CallbackQuery, widget, dialog_manager: DialogManager, date: datetime.date
+):
+    """Saves the date to block and switches to window selection."""
+    dialog_manager.dialog_data["date_to_block"] = date.isoformat()
+    await dialog_manager.switch_to(AdminSG.block_day_select_window)
+
+
+async def on_window_to_block_selected(
+    callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
+):
+    """Blocks the selected date for the chosen window(s)."""
+    session: AsyncSession = dialog_manager.middleware_data["session"]
+    lang = dialog_manager.middleware_data.get("lang")
+
+    date_iso = dialog_manager.dialog_data.pop("date_to_block")
+    target_date = datetime.date.fromisoformat(date_iso)
+    window_to_block = int(item_id)
+
+    windows = (
+        [1, 2, 3] if window_to_block == 0 else [window_to_block]
+    )  # 0 means all windows
+    await block_day_in_schedule(session, target_date, windows)
+
+    await callback.answer(
+        lexicon(
+            lang,
+            "admin_day_blocked_success",
+            date=target_date.strftime("%d.%m.%Y"),
+        ),
+        show_alert=True,
+    )
+    logger.info(
+        f"Admin {callback.from_user.id} blocked {target_date} for windows {windows}"
+    )
+    await dialog_manager.switch_to(AdminSG.schedule_management)
+
+
 # --- Dialog Windows ---
 admin_dialog = Dialog(
+    # Main Menu
     Window(
         Multi(
             LocalizedTextFormat("admin_panel_title"),
@@ -134,6 +195,11 @@ admin_dialog = Dialog(
                 state=AdminSG.set_last_day,
             ),
             SwitchTo(
+                LocalizedTextFormat("admin_manage_schedule"),
+                id="manage_schedule",
+                state=AdminSG.schedule_management,
+            ),
+            SwitchTo(
                 LocalizedTextFormat("admin_broadcast"),
                 id="broadcast",
                 state=AdminSG.broadcast_text,
@@ -143,6 +209,7 @@ admin_dialog = Dialog(
         state=AdminSG.main_menu,
         getter=get_stats_data,
     ),
+    # Set Last Day
     Window(
         LocalizedTextFormat("admin_select_date_prompt"),
         Calendar(id="calendar_last_day", on_click=on_date_selected),
@@ -153,6 +220,7 @@ admin_dialog = Dialog(
         ),
         state=AdminSG.set_last_day,
     ),
+    # Broadcast
     Window(
         LocalizedTextFormat("admin_broadcast_prompt"),
         MessageInput(on_broadcast_text_input),
@@ -180,5 +248,49 @@ admin_dialog = Dialog(
         ),
         state=AdminSG.broadcast_confirm,
         getter=get_broadcast_data,
+    ),
+    # Schedule Management Menu
+    Window(
+        LocalizedTextFormat("admin_schedule_menu_prompt"),
+        SwitchTo(
+            LocalizedTextFormat("admin_block_day"),
+            id="block_day",
+            state=AdminSG.block_day_select_date,
+        ),
+        SwitchTo(
+            LocalizedTextFormat("back_button"),
+            id="back_to_main_from_schedule",
+            state=AdminSG.main_menu,
+        ),
+        state=AdminSG.schedule_management,
+    ),
+    # Block Day: Select Date
+    Window(
+        LocalizedTextFormat("admin_block_day_prompt"),
+        Calendar(id="calendar_block_day", on_click=on_date_to_block_selected),
+        SwitchTo(
+            LocalizedTextFormat("back_button"),
+            id="back_to_schedule_menu",
+            state=AdminSG.schedule_management,
+        ),
+        state=AdminSG.block_day_select_date,
+    ),
+    # Block Day: Select Window
+    Window(
+        LocalizedTextFormat("admin_block_day_select_window_prompt"),
+        Select(
+            Format("{item[0]}"),
+            id="window_select",
+            item_id_getter=lambda item: item[1],
+            items="windows",
+            on_click=on_window_to_block_selected,
+        ),
+        SwitchTo(
+            LocalizedTextFormat("back_button"),
+            id="back_to_block_day_date",
+            state=AdminSG.block_day_select_date,
+        ),
+        state=AdminSG.block_day_select_window,
+        getter=get_block_day_data,
     ),
 )

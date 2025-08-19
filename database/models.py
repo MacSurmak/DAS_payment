@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     Identity,
+    Index,
     Integer,
     String,
     Time,
@@ -121,3 +122,25 @@ class LastDay(Base):
 
     def __repr__(self) -> str:
         return f"<LastDay(last_date='{self.last_date}')>"
+
+
+class ScheduleException(Base):
+    """Represents an exception to the regular timetable, e.g., a holiday."""
+
+    __tablename__ = "schedule_exceptions"
+
+    exception_id = Column(Integer, Identity(), primary_key=True)
+    exception_date = Column(Date, nullable=False)
+    start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
+    window_number = Column(Integer, nullable=False)  # 0 for all windows
+    is_working = Column(
+        Boolean, default=False, nullable=False
+    )  # False = day off, True = special working hours
+
+    __table_args__ = (
+        Index("ix_exception_date_window", "exception_date", "window_number"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<ScheduleException(id={self.exception_id}, date='{self.exception_date}', window={self.window_number}, working={self.is_working})>"
