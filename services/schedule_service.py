@@ -6,7 +6,14 @@ from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from database.models import Booking, Faculty, ScheduleException, TimetableSlot, User
+from database.models import (
+    Booking,
+    Faculty,
+    LastDay,
+    ScheduleException,
+    TimetableSlot,
+    User,
+)
 
 
 async def get_user_booking(session: AsyncSession, user: User) -> Booking | None:
@@ -21,6 +28,16 @@ async def get_available_slots(
     Generates a list of available 5-minute slots for a user on a specific date,
     respecting the staggered window schedule (each window gets a slot every 15 minutes).
     """
+    # --- Final validation layer ---
+    last_day_record = await session.get(LastDay, 1)
+    if not last_day_record or target_date > last_day_record.last_date:
+        logger.warning(
+            f"Attempted to get slots for an invalid date {target_date} "
+            f"beyond last day {last_day_record.last_date if last_day_record else 'N/A'}"
+        )
+        return []
+    # --- End validation ---
+
     if not user.faculty:
         logger.error(
             f"User {user.telegram_id} has no faculty, cannot get window number."

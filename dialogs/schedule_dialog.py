@@ -4,7 +4,7 @@ from typing import Dict, List
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, InlineKeyboardButton
-from aiogram_dialog import Dialog, DialogManager, StartMode, Window
+from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
 from aiogram_dialog.widgets.kbd.calendar_kbd import CalendarConfig
 from aiogram_dialog.widgets.text import Const, Format
@@ -52,8 +52,15 @@ async def get_dates_data(dialog_manager: DialogManager, **kwargs) -> dict:
     """Prepares data for the date selection window."""
     session: AsyncSession = dialog_manager.middleware_data["session"]
     last_day_record = await session.get(LastDay, 1)
+
     min_date = datetime.date.today()
-    max_date = last_day_record.last_date if last_day_record else min_date
+    # If last_day is not set in DB, prevent booking by setting max_date to yesterday
+    max_date = (
+        last_day_record.last_date
+        if last_day_record
+        else min_date - datetime.timedelta(days=1)
+    )
+
     return {"min_date": min_date, "max_date": max_date}
 
 
@@ -94,7 +101,26 @@ async def on_date_selected(
     dialog_manager: DialogManager,
     selected_date: datetime.date,
 ):
-    """Handles date selection from the calendar."""
+    """Handles date selection from the calendar with backend validation."""
+    session: AsyncSession = dialog_manager.middleware_data["session"]
+    lang = dialog_manager.middleware_data.get("lang")
+
+    # --- Backend Validation ---
+    last_day_record = await session.get(LastDay, 1)
+    max_date = (
+        last_day_record.last_date
+        if last_day_record
+        else datetime.date.today() - datetime.timedelta(days=1)
+    )
+
+    if selected_date > max_date:
+        await callback.answer(
+            lexicon(lang, "date_is_in_future", date=max_date.strftime("%d.%m.%Y")),
+            show_alert=True,
+        )
+        return
+    # --- End Validation ---
+
     dialog_manager.dialog_data["selected_date"] = selected_date.isoformat()
     await dialog_manager.switch_to(ScheduleSG.time_select)
 

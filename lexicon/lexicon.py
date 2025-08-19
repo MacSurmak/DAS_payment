@@ -60,6 +60,7 @@ LEXICON: dict[str, dict[str, str]] = {
         "booking_successful": "✅ Вы успешно записаны!",
         "booking_failed_already_booked": "❌ У вас уже есть активная запись.",
         "booking_failed_too_late": "❌ Этот временной слот уже занят. Пожалуйста, выберите другой.",
+        "date_is_in_future": "❌ Запись возможна только до {date}. Пожалуйста, выберите другую дату.",
         # Booking Management Dialog
         "my_booking_title": "<b>Ваша текущая запись:</b>\n\n"
         "<b>Дата:</b> {date} ({weekday})\n"
