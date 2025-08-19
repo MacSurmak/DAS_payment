@@ -9,7 +9,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from database import User
+from database.models import User
 from lexicon import DEFAULT_LANG, lexicon
 
 
