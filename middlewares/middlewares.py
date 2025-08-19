@@ -67,10 +67,12 @@ class MessageThrottlingMiddleware(BaseMiddleware):
     def __init__(self, storage: RedisStorage):
         self.storage = storage
 
-    async def __call__(self,
-                       handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
-                       event: Message,
-                       data: Dict[str, Any]) -> Any:
+    async def __call__(
+        self,
+        handler: Callable[[TelegramObject, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any],
+    ) -> Any:
 
         user = str(event.from_user.id)
         check_user = await self.storage.redis.get(name=user)

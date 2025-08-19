@@ -18,7 +18,8 @@ async def get_available_slots(
     session: AsyncSession, user: User, target_date: datetime.date
 ) -> List[datetime.datetime]:
     """
-    Generates a list of available 5-minute slots for a user on a specific date.
+    Generates a list of available 5-minute slots for a user on a specific date,
+    respecting the staggered window schedule (each window gets a slot every 15 minutes).
     """
     if not user.faculty:
         logger.error(
@@ -26,63 +27,82 @@ async def get_available_slots(
         )
         return []
 
-    window = user.faculty.window_number
+    user_window = user.faculty.window_number
     day_of_week = target_date.weekday()
 
-    # 1. Get all time blocks for this window and day of the week
+    # 1. Get all active time blocks for this day of the week FOR ALL WINDOWS.
+    # We need all blocks to correctly calculate the staggered schedule.
     stmt_slots = select(TimetableSlot).where(
-        TimetableSlot.window_number == window,
-        TimetableSlot.day_of_week == day_of_week,
-        TimetableSlot.is_active == True,
+        TimetableSlot.day_of_week == day_of_week, TimetableSlot.is_active == True
     )
     result_slots = await session.scalars(stmt_slots)
-    time_blocks = result_slots.all()
+    # Group blocks by start and end times to treat them as a single period for all windows
+    time_blocks = {}
+    for slot in result_slots.all():
+        key = (slot.start_time, slot.end_time)
+        if key not in time_blocks:
+            time_blocks[key] = []
+        time_blocks[key].append(slot)
 
-    # 2. Get all existing bookings for this window and date
+    # 2. Get all existing bookings for the entire day to avoid conflicts
     stmt_bookings = select(Booking.booking_datetime).where(
-        Booking.window_number == window,
         func.date(Booking.booking_datetime) == target_date,
     )
     result_bookings = await session.scalars(stmt_bookings)
     booked_times = {b.replace(tzinfo=None) for b in result_bookings.all()}
 
-    # 3. Get all blocking exceptions for this window (or all windows) and date
+    # 3. Get all non-working exceptions for this date
     stmt_exceptions = select(ScheduleException).where(
         ScheduleException.exception_date == target_date,
-        or_(
-            ScheduleException.window_number == window,
-            ScheduleException.window_number == 0,
-        ),
         ScheduleException.is_working == False,
     )
     result_exceptions = await session.scalars(stmt_exceptions)
     exceptions = result_exceptions.all()
 
-    # 4. Generate all potential slots and filter out booked and blocked ones
+    # 4. Generate all potential slots and filter them
     available_slots = []
     now = datetime.datetime.now()
 
-    for block in time_blocks:
-        current_time = datetime.datetime.combine(target_date, block.start_time)
-        end_time = datetime.datetime.combine(target_date, block.end_time)
+    # Sort blocks by start time to process them chronologically
+    sorted_block_keys = sorted(time_blocks.keys())
 
+    for start_t, end_t in sorted_block_keys:
+        current_time = datetime.datetime.combine(target_date, start_t)
+        end_time = datetime.datetime.combine(target_date, end_t)
+
+        # The window cycle (1, 2, 3, 1, 2, 3...) resets for each major time block.
+        window_cycle_counter = 0
         while current_time < end_time:
-            # Check if the current slot is inside any exception block
-            is_blocked = False
-            for exc in exceptions:
-                exc_start_dt = datetime.datetime.combine(target_date, exc.start_time)
-                exc_end_dt = datetime.datetime.combine(target_date, exc.end_time)
-                if exc_start_dt <= current_time < exc_end_dt:
-                    is_blocked = True
-                    break
+            # Determine which window's turn it is for this 5-minute slot
+            current_window_turn = (window_cycle_counter % 3) + 1
 
-            if (
-                current_time > now
-                and current_time not in booked_times
-                and not is_blocked
-            ):
-                available_slots.append(current_time)
+            # A. Check if it's this user's window's turn
+            if current_window_turn == user_window:
+                # B. Check if this slot is inside any exception block for the target window
+                is_blocked = False
+                for exc in exceptions:
+                    # Exception applies if it's for this specific window or for all windows (0)
+                    if exc.window_number == user_window or exc.window_number == 0:
+                        exc_start_dt = datetime.datetime.combine(
+                            target_date, exc.start_time
+                        )
+                        exc_end_dt = datetime.datetime.combine(
+                            target_date, exc.end_time
+                        )
+                        if exc_start_dt <= current_time < exc_end_dt:
+                            is_blocked = True
+                            break
+
+                # C. Check if slot is available (in future, not booked, not blocked)
+                if (
+                    current_time > now
+                    and current_time not in booked_times
+                    and not is_blocked
+                ):
+                    available_slots.append(current_time)
+
             current_time += datetime.timedelta(minutes=5)
+            window_cycle_counter += 1
 
     return sorted(available_slots)
 
