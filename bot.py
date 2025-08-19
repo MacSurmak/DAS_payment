@@ -34,6 +34,7 @@ from services import (
     setup_logger,
 )
 
+__version__ = "2.0.0"
 
 async def on_startup(bot: Bot, session_maker: async_sessionmaker) -> None:
     """A function that is executed when the bot starts."""
@@ -80,6 +81,8 @@ async def readiness_probe(request):
 async def main() -> None:
     """Initializes and starts the bot."""
     setup_logger("INFO")
+
+    logger.info(f"Starting DAS Payment Bot version {__version__}")
 
     # --- Initializing Bot and Storages ---
     bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
