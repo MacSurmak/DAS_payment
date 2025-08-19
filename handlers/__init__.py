@@ -1,1 +1,3 @@
-# This file will contain imports for all routers
+from .commands import commands_router
+
+__all__ = ["commands_router"]
