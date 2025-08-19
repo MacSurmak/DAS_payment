@@ -1,5 +1,5 @@
 import datetime
-from typing import List
+from typing import List, Optional
 
 from aiogram import Bot
 from aiogram.exceptions import TelegramAPIError
@@ -66,22 +66,32 @@ async def broadcast_message(
 
 
 async def block_day_in_schedule(
-    session: AsyncSession, target_date: datetime.date, windows: List[int]
+    session: AsyncSession,
+    target_date: datetime.date,
+    windows: List[int],
+    start_time: Optional[datetime.time] = None,
+    end_time: Optional[datetime.time] = None,
 ):
     """
-    Creates ScheduleException records to make a day non-working.
+    Creates ScheduleException records to make a day or time slot non-working.
 
     Args:
         session: The database session.
         target_date: The date to block.
         windows: A list of window numbers to block.
+        start_time: The start time of the block. Defaults to the beginning of the day.
+        end_time: The end time of the block. Defaults to the end of the day.
     """
+    # If no specific time is given, block the entire day
+    final_start_time = start_time or datetime.time(0, 0)
+    final_end_time = end_time or datetime.time(23, 59)
+
     exceptions = []
     for window_num in windows:
         exception = ScheduleException(
             exception_date=target_date,
-            start_time=datetime.time(0, 0),
-            end_time=datetime.time(23, 59),
+            start_time=final_start_time,
+            end_time=final_end_time,
             window_number=window_num,
             is_working=False,
         )

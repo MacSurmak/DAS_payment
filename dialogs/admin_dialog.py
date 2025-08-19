@@ -1,5 +1,5 @@
 import datetime
-import os
+from typing import List, Tuple
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, FSInputFile, Message
@@ -8,9 +8,10 @@ from aiogram_dialog.widgets.input import MessageInput
 from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
 from aiogram_dialog.widgets.text import Const, Format, Multi
 from loguru import logger
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from database.models import LastDay
+from database.models import LastDay, TimetableSlot
 from lexicon import LocalizedTextFormat, lexicon
 from services.admin_service import (
     block_day_in_schedule,
@@ -29,6 +30,8 @@ class AdminSG(StatesGroup):
     broadcast_confirm = State()
     schedule_management = State()
     block_day_select_date = State()
+    block_day_select_type = State()
+    block_day_select_slot = State()
     block_day_select_window = State()
 
 
@@ -46,6 +49,7 @@ async def get_broadcast_data(dialog_manager: DialogManager, **kwargs) -> dict:
 
 
 async def get_block_day_data(dialog_manager: DialogManager, **kwargs) -> dict:
+    """Prepares data for window selection and date display."""
     date_iso = dialog_manager.dialog_data.get("date_to_block")
     date_str = datetime.date.fromisoformat(date_iso).strftime("%d.%m.%Y")
     windows = [
@@ -55,6 +59,36 @@ async def get_block_day_data(dialog_manager: DialogManager, **kwargs) -> dict:
         (lexicon("ru", "admin_all_windows"), 0),
     ]
     return {"date_to_block": date_str, "windows": windows}
+
+
+async def get_slots_for_day_data(dialog_manager: DialogManager, **kwargs) -> dict:
+    """Gets default timetable slots for the selected day of the week."""
+    session: AsyncSession = dialog_manager.middleware_data["session"]
+    date_iso = dialog_manager.dialog_data.get("date_to_block")
+    target_date = datetime.date.fromisoformat(date_iso)
+    day_of_week = target_date.weekday()
+
+    stmt = (
+        select(TimetableSlot.start_time, TimetableSlot.end_time)
+        .where(TimetableSlot.day_of_week == day_of_week)
+        .distinct()
+        .order_by(TimetableSlot.start_time)
+    )
+    result = await session.execute(stmt)
+    slots = result.all()
+
+    # Format for Select widget: (display_text, item_id)
+    formatted_slots = [
+        (
+            f"{s.start_time.strftime('%H:%M')} - {s.end_time.strftime('%H:%M')}",
+            f"{s.start_time.isoformat()}|{s.end_time.isoformat()}",
+        )
+        for s in slots
+    ]
+    return {
+        "date_to_block": target_date.strftime("%d.%m.%Y"),
+        "slots": formatted_slots,
+    }
 
 
 # --- Handlers ---
@@ -140,37 +174,71 @@ async def on_broadcast_confirm(
 async def on_date_to_block_selected(
     callback: CallbackQuery, widget, dialog_manager: DialogManager, date: datetime.date
 ):
-    """Saves the date to block and switches to window selection."""
+    """Saves the date to block and switches to block type selection."""
     dialog_manager.dialog_data["date_to_block"] = date.isoformat()
+    await dialog_manager.switch_to(AdminSG.block_day_select_type)
+
+
+async def on_block_type_selected(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    """Handles selection of block type (whole day or time slot)."""
+    if button.widget_id == "block_whole_day":
+        dialog_manager.dialog_data["slot_to_block"] = (
+            None  # Clear any previous selection
+        )
+        await dialog_manager.switch_to(AdminSG.block_day_select_window)
+    elif button.widget_id == "block_time_slot":
+        await dialog_manager.switch_to(AdminSG.block_day_select_slot)
+
+
+async def on_slot_to_block_selected(
+    callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
+):
+    """Saves the selected time slot and proceeds to window selection."""
+    dialog_manager.dialog_data["slot_to_block"] = item_id
     await dialog_manager.switch_to(AdminSG.block_day_select_window)
 
 
 async def on_window_to_block_selected(
     callback: CallbackQuery, widget: Select, dialog_manager: DialogManager, item_id: str
 ):
-    """Blocks the selected date for the chosen window(s)."""
+    """Blocks the selected date/slot for the chosen window(s)."""
     session: AsyncSession = dialog_manager.middleware_data["session"]
     lang = dialog_manager.middleware_data.get("lang")
 
-    date_iso = dialog_manager.dialog_data.pop("date_to_block")
+    date_iso = dialog_manager.dialog_data.get("date_to_block")
     target_date = datetime.date.fromisoformat(date_iso)
     window_to_block = int(item_id)
+    slot_str = dialog_manager.dialog_data.get("slot_to_block")
+
+    start_time, end_time = None, None
+    if slot_str:
+        start_iso, end_iso = slot_str.split("|")
+        start_time = datetime.time.fromisoformat(start_iso)
+        end_time = datetime.time.fromisoformat(end_iso)
+        lexicon_key = "admin_time_slot_blocked_success"
+    else:
+        lexicon_key = "admin_day_blocked_success"
 
     windows = (
         [1, 2, 3] if window_to_block == 0 else [window_to_block]
     )  # 0 means all windows
-    await block_day_in_schedule(session, target_date, windows)
+    await block_day_in_schedule(session, target_date, windows, start_time, end_time)
 
     await callback.answer(
         lexicon(
             lang,
-            "admin_day_blocked_success",
+            lexicon_key,
             date=target_date.strftime("%d.%m.%Y"),
+            start=start_time.strftime("%H:%M") if start_time else "",
+            end=end_time.strftime("%H:%M") if end_time else "",
         ),
         show_alert=True,
     )
     logger.info(
-        f"Admin {callback.from_user.id} blocked {target_date} for windows {windows}"
+        f"Admin {callback.from_user.id} blocked {target_date} "
+        f"(from {start_time} to {end_time}) for windows {windows}"
     )
     await dialog_manager.switch_to(AdminSG.schedule_management)
 
@@ -274,6 +342,51 @@ admin_dialog = Dialog(
             state=AdminSG.schedule_management,
         ),
         state=AdminSG.block_day_select_date,
+    ),
+    # Block Day: Select Type (Whole day or Slot)
+    Window(
+        LocalizedTextFormat("admin_block_type_prompt"),
+        Group(
+            Button(
+                LocalizedTextFormat("admin_block_whole_day"),
+                id="block_whole_day",
+                on_click=on_block_type_selected,
+            ),
+            Button(
+                LocalizedTextFormat("admin_block_time_slot"),
+                id="block_time_slot",
+                on_click=on_block_type_selected,
+            ),
+            width=1,
+        ),
+        SwitchTo(
+            LocalizedTextFormat("back_button"),
+            id="back_to_date_select",
+            state=AdminSG.block_day_select_date,
+        ),
+        state=AdminSG.block_day_select_type,
+        getter=get_block_day_data,
+    ),
+    # Block Day: Select Slot
+    Window(
+        LocalizedTextFormat("admin_select_slot_to_block_prompt"),
+        Group(
+            Select(
+                Format("{item[0]}"),
+                id="slot_select",
+                item_id_getter=lambda item: item[1],
+                items="slots",
+                on_click=on_slot_to_block_selected,
+            ),
+            width=1,
+        ),
+        SwitchTo(
+            LocalizedTextFormat("back_button"),
+            id="back_to_type_select",
+            state=AdminSG.block_day_select_type,
+        ),
+        state=AdminSG.block_day_select_slot,
+        getter=get_slots_for_day_data,
     ),
     # Block Day: Select Window
     Window(
