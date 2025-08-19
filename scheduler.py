@@ -32,8 +32,9 @@ async def main() -> None:
     scheduler.add_job(
         send_notifications,
         "cron",
-        hour="8-18",
-        minute="*/5",
+        # hour="8-18",
+        # minute="*/5",
+        minute="*",
         args=[bot, session_maker],
     )
     scheduler.start()
