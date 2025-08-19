@@ -1,63 +1,65 @@
 import asyncio
-import os
-import time
+import urllib
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
-from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.utils.callback_answer import CallbackAnswerMiddleware
+from aiogram_dialog import setup_dialogs
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from config_data import config
-from handlers import commands, messages, admin
-from keyboards.commands_menu import set_commands_menu
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from middlewares.middlewares import MessageThrottlingMiddleware
-
+from database.base import Base
+from keyboards.commands_menu import set_main_menu
+from middlewares import DbSessionMiddleware, GetLangMiddleware
 from services import setup_logger
-from services.services import notify_day_before, notify_hour_before
 
-os.environ["TZ"] = "Europe/Moscow"
-time.tzset()
+# TODO: Import routers and dialogs later
+# from handlers import commands_router
+# from dialogs import registration_dialog
 
 
 async def main() -> None:
+    """Initializes and starts the bot."""
+    setup_logger("INFO")
 
-    bot: Bot = Bot(
-        token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML")
-    )
+    # --- Initializing Bot and Storages ---
+    bot = Bot(token=config.bot.token, default=DefaultBotProperties(parse_mode="HTML"))
 
-    bot_storage: RedisStorage = RedisStorage.from_url(
-        f"redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/0"
+    bot_storage = RedisStorage.from_url(
+        f"redis://{config.redis.user}:{urllib.parse.quote_plus(config.redis.password)}@{config.redis.host}:{config.redis.port}/{config.redis.bot_database}",
+        key_builder=DefaultKeyBuilder(with_destiny=True),
     )
-    middleware_storage: RedisStorage = RedisStorage.from_url(
-        f"redis://{config.redis.user}:{config.redis.password}@{config.redis.host}:{config.redis.port}/1"
-    )
+    # Note: for throttling or other middleware, a separate storage can be used.
+    # middleware_storage = RedisStorage.from_url(...)
 
-    dp: Dispatcher = Dispatcher(storage=bot_storage)
+    dp = Dispatcher(storage=bot_storage)
 
-    dp.message.middleware.register(
-        MessageThrottlingMiddleware(storage=middleware_storage)
-    )
+    # --- Database Initialization ---
+    engine = create_async_engine(url=config.db.url, echo=False)
+    async with engine.begin() as conn:
+        # This will create tables if they don't exist. For changes, use Alembic.
+        await conn.run_sync(Base.metadata.create_all)
+    session_maker = async_sessionmaker(engine, expire_on_commit=False)
+
+    # --- Middlewares Setup ---
+    dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
+    dp.update.middleware(GetLangMiddleware())
     dp.callback_query.middleware(CallbackAnswerMiddleware())
 
-    dp.include_router(admin.router)
-    dp.include_router(commands.router)
-    dp.include_router(messages.router)
+    # --- Routers and Dialogs Setup ---
+    # TODO: Include routers and dialogs here
+    # dp.include_router(registration_dialog)
+    # dp.include_router(commands_router)
 
-    scheduler = AsyncIOScheduler(timezone="Europe/Moscow")
-    scheduler.start()
+    # Must be the last one to register handlers
+    setup_dialogs(dp)
 
-    scheduler.add_job(notify_hour_before, "cron", hour="8-17", minute="*/5", args=[bot])
-    scheduler.add_job(notify_day_before, "cron", hour="9-18", minute="*/5", args=[bot])
-
-    await set_commands_menu(bot)
+    # --- Bot Startup ---
+    await set_main_menu(bot)
     await bot.delete_webhook(drop_pending_updates=True)
-
-    polling_task = asyncio.create_task(dp.start_polling(bot))
-
-    await polling_task
+    await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    setup_logger("DEBUG")
     asyncio.run(main())
