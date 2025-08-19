@@ -10,11 +10,16 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from config_data import config
 from database.base import Base
-from dialogs import registration_dialog
+from dialogs import registration_dialog, schedule_dialog
 from handlers import commands_router
 from keyboards.commands_menu import set_main_menu
 from middlewares import DbSessionMiddleware, GetLangMiddleware
-from services import populate_initial_faculties, setup_logger
+from services import (
+    populate_initial_faculties,
+    populate_initial_lastday,
+    populate_initial_timetable,
+    setup_logger,
+)
 
 
 async def main() -> None:
@@ -38,7 +43,11 @@ async def main() -> None:
     # --- Create tables and populate initial data ---
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
+    # Populate initial data in sequence
     await populate_initial_faculties(session_maker)
+    await populate_initial_timetable(session_maker)
+    await populate_initial_lastday(session_maker)
 
     # --- Middlewares Setup ---
     dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
@@ -48,6 +57,7 @@ async def main() -> None:
     # --- Routers and Dialogs Setup ---
     dp.include_router(commands_router)
     dp.include_router(registration_dialog)
+    dp.include_router(schedule_dialog)
 
     # Must be the last one to register handlers
     setup_dialogs(dp)

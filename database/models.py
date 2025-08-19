@@ -6,7 +6,6 @@ from sqlalchemy import (
     Column,
     Date,
     DateTime,
-    Enum,
     ForeignKey,
     Identity,
     Integer,
@@ -30,15 +29,19 @@ class User(Base):
     first_name = Column(String(255))
     last_name = Column(String(255))
     patronymic = Column(String(255), nullable=True)
-    faculty = Column(String(255))
+    faculty_id = Column(
+        Integer, ForeignKey("faculties.faculty_id", ondelete="SET NULL"), nullable=True
+    )
     degree = Column(String(50))
     year = Column(Integer)
     is_admin = Column(Boolean, default=False, nullable=False)
-    is_signed_up = Column(Boolean, default=False, nullable=False)
+    is_signed_up = Column(Boolean, default=False, nullable=False, index=True)
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    lang = Column(String(10), default="ru")
 
+    faculty = relationship("Faculty")
     booking = relationship("Booking", back_populates="user", uselist=False)
 
     def __repr__(self) -> str:
@@ -52,29 +55,36 @@ class Faculty(Base):
 
     faculty_id = Column(Integer, Identity(), primary_key=True)
     name = Column(String(255), unique=True, nullable=False)
-    window_number = Column(Integer, nullable=False)
+    window_number = Column(Integer, nullable=False, index=True)
 
     def __repr__(self) -> str:
         return f"<Faculty(id={self.faculty_id}, name='{self.name}', window={self.window_number})>"
 
 
 class TimetableSlot(Base):
-    """Represents a recurring, available slot in the weekly schedule."""
+    """Represents a recurring, available block of time in the weekly schedule."""
 
     __tablename__ = "timetable_slots"
 
     slot_id = Column(Integer, Identity(), primary_key=True)
     day_of_week = Column(Integer, nullable=False)  # Monday=0, Sunday=6
     start_time = Column(Time, nullable=False)
+    end_time = Column(Time, nullable=False)
     is_active = Column(Boolean, default=True, nullable=False)
     window_number = Column(Integer, nullable=False)
 
     __table_args__ = (
-        UniqueConstraint("day_of_week", "start_time", "window_number", name="uq_slot"),
+        UniqueConstraint(
+            "day_of_week",
+            "start_time",
+            "end_time",
+            "window_number",
+            name="uq_slot_block",
+        ),
     )
 
     def __repr__(self) -> str:
-        return f"<TimetableSlot(id={self.slot_id}, day={self.day_of_week}, time='{self.start_time}')>"
+        return f"<TimetableSlot(id={self.slot_id}, day={self.day_of_week}, time='{self.start_time}-{self.end_time}', win={self.window_number})>"
 
 
 class Booking(Base):
@@ -99,3 +109,15 @@ class Booking(Base):
 
     def __repr__(self) -> str:
         return f"<Booking(id={self.booking_id}, user_id={self.user_id}, datetime='{self.booking_datetime}')>"
+
+
+class LastDay(Base):
+    """Stores the last day available for booking."""
+
+    __tablename__ = "last_day"
+
+    id = Column(Integer, primary_key=True, default=1)
+    last_date = Column(Date, nullable=False)
+
+    def __repr__(self) -> str:
+        return f"<LastDay(last_date='{self.last_date}')>"
