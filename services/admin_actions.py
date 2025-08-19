@@ -103,10 +103,13 @@ async def create_schedule_exception(
     Returns:
         The created ScheduleException object.
     """
+    start_date_iso = data.get("start_date")
+    end_date_iso = data.get("end_date")
+
     new_exception = ScheduleException(
         description=data.get("description"),
-        start_date=datetime.date.fromisoformat(data.get("start_date")),
-        end_date=datetime.date.fromisoformat(data.get("end_date")),
+        start_date=datetime.date.fromisoformat(start_date_iso),
+        end_date=datetime.date.fromisoformat(end_date_iso) if end_date_iso else None,
         target_days_of_week=[int(d) for d in data.get("days_of_week", [])] or None,
         target_start_time=(
             datetime.time.fromisoformat(data["target_slot"])
@@ -134,6 +137,56 @@ async def create_schedule_exception(
     session.add(new_exception)
     await session.commit()
     return new_exception
+
+
+async def update_schedule_exception(
+    session: AsyncSession, exception_id: int, data: Dict[str, Any]
+) -> ScheduleException | None:
+    """
+    Updates an existing schedule exception rule from dialog data.
+
+    Args:
+        session: The database session.
+        exception_id: The ID of the exception to update.
+        data: The data collected from the dialog manager.
+
+    Returns:
+        The updated ScheduleException object or None if not found.
+    """
+    exc = await session.get(ScheduleException, exception_id)
+    if not exc:
+        return None
+
+    start_date_iso = data.get("start_date")
+    end_date_iso = data.get("end_date")
+
+    exc.description = data.get("description")
+    exc.start_date = datetime.date.fromisoformat(start_date_iso)
+    exc.end_date = datetime.date.fromisoformat(end_date_iso) if end_date_iso else None
+    exc.target_days_of_week = [int(d) for d in data.get("days_of_week", [])] or None
+    exc.target_start_time = (
+        datetime.time.fromisoformat(data["target_slot"])
+        if data.get("target_slot")
+        else None
+    )
+    exc.new_start_time = (
+        datetime.time.fromisoformat(data["new_start_time"])
+        if data.get("new_start_time")
+        else None
+    )
+    exc.new_end_time = (
+        datetime.time.fromisoformat(data["new_end_time"])
+        if data.get("new_end_time")
+        else None
+    )
+    exc.allowed_years = data.get("years") or None
+    exc.block_others_if_years_mismatch = data.get(
+        "block_others_if_years_mismatch", False
+    )
+    exc.start_window_override = data.get("start_window")
+
+    await session.commit()
+    return exc
 
 
 async def delete_schedule_exception(session: AsyncSession, exception_id: int) -> bool:

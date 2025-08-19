@@ -137,7 +137,7 @@ class ScheduleException(Base):
     exception_id = Column(Integer, Identity(), primary_key=True)
     description = Column(String(255), nullable=False)
     start_date = Column(Date, nullable=False, index=True)
-    end_date = Column(Date, nullable=False, index=True)
+    end_date = Column(Date, nullable=True, index=True)
     is_active = Column(Boolean, default=True, nullable=False, index=True)
     priority = Column(Integer, default=0, nullable=False, index=True)
 

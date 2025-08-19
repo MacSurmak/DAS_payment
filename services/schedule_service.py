@@ -2,7 +2,7 @@ import datetime
 from typing import Dict, List, Tuple
 
 from loguru import logger
-from sqlalchemy import and_, desc, func, select
+from sqlalchemy import and_, desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
@@ -65,7 +65,10 @@ async def get_available_slots(
         select(ScheduleException)
         .where(
             ScheduleException.start_date <= target_date,
-            ScheduleException.end_date >= target_date,
+            or_(
+                ScheduleException.end_date == None,  # noqa
+                ScheduleException.end_date >= target_date,
+            ),
             ScheduleException.is_active == True,
         )
         .order_by(desc(ScheduleException.priority))

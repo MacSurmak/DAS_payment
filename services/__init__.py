@@ -4,6 +4,7 @@ from .admin_actions import (
     create_schedule_exception,
     delete_schedule_exception,
     get_statistics,
+    update_schedule_exception,
 )
 from .initial_data_service import (
     populate_initial_faculties,
@@ -36,4 +37,5 @@ __all__ = [
     "create_non_working_day",
     "create_schedule_exception",
     "delete_schedule_exception",
+    "update_schedule_exception",
 ]
