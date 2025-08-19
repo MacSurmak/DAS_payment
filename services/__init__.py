@@ -5,6 +5,7 @@ from .initial_data_service import (
     populate_initial_timetable,
 )
 from .logger import setup_logger
+from .notification_service import send_notifications
 from .report_service import generate_excel_report
 from .schedule_service import (
     cancel_booking,
@@ -25,4 +26,5 @@ __all__ = [
     "get_statistics",
     "generate_excel_report",
     "broadcast_message",
+    "send_notifications",
 ]

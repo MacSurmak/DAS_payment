@@ -1,13 +1,16 @@
+import time
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, Update
+from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.types import Message, TelegramObject, Update
+from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
 from database import User
-from lexicon import DEFAULT_LANG
+from lexicon import DEFAULT_LANG, lexicon
 
 
 class DbSessionMiddleware(BaseMiddleware):
@@ -57,4 +60,43 @@ class GetLangMiddleware(BaseMiddleware):
 
         data["lang"] = lang_code
         data["user"] = db_user  # Add user object to data for easy access
+        return await handler(event, data)
+
+
+class MessageThrottlingMiddleware(BaseMiddleware):
+    """Limits the frequency of messages from a user."""
+
+    def __init__(self, storage: RedisStorage, rate_limit: float = 0.7):
+        self.storage = storage
+        self.rate_limit = rate_limit
+
+    async def __call__(
+        self,
+        handler: Callable[[Message, Dict[str, Any]], Awaitable[Any]],
+        event: Message,
+        data: Dict[str, Any],
+    ) -> Any:
+        user = data.get("event_from_user")
+        if not user:
+            return await handler(event, data)
+
+        key = f"throttle:{user.id}"
+        now = time.monotonic()
+        last_time_str = await self.storage.redis.get(key)
+
+        if last_time_str:
+            try:
+                last_time = float(last_time_str.decode())
+                elapsed = now - last_time
+                if elapsed < self.rate_limit:
+                    lang = data.get("lang", DEFAULT_LANG)
+                    warn_key = f"throttle_warn:{user.id}"
+                    if not await self.storage.redis.get(warn_key):
+                        await event.answer(lexicon(lang, "throttling_warning"))
+                        await self.storage.redis.set(warn_key, "1", ex=5)
+                    return
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error decoding throttle time for user {user.id}: {e}")
+
+        await self.storage.redis.set(key, str(now), ex=int(self.rate_limit * 2) + 1)
         return await handler(event, data)

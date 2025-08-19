@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Faculty, User
 from lexicon import LocalizedTextFormat, lexicon
-from services.initial_data_service import FACULTIES_DATA
+from .schedule_dialog import ScheduleSG
 
 
 class RegistrationSG(StatesGroup):
@@ -81,6 +81,8 @@ async def on_name_input(
     dialog_manager.dialog_data["first_name"] = parts[1]
     if len(parts) == 3:
         dialog_manager.dialog_data["patronymic"] = parts[2]
+    else:
+        dialog_manager.dialog_data["patronymic"] = None
     await dialog_manager.next()
 
 
@@ -116,26 +118,23 @@ async def on_confirm(
     lang = dialog_manager.middleware_data.get("lang")
     dialog_data = dialog_manager.dialog_data
 
-    faculty_id = dialog_data.get("faculty_id")
-    faculty = await session.get(Faculty, faculty_id)
-
     new_user = User(
         telegram_id=callback.from_user.id,
         first_name=dialog_data.get("first_name"),
         last_name=dialog_data.get("last_name"),
         patronymic=dialog_data.get("patronymic"),
-        faculty=faculty.name if faculty else "Unknown",
+        faculty_id=dialog_data.get("faculty_id"),
         degree=dialog_data.get("degree"),
         year=dialog_data.get("year"),
+        lang=lang,
     )
     session.add(new_user)
     await session.commit()
     logger.info(f"New user registered: {new_user}")
 
     await callback.message.edit_text(lexicon(lang, "registration_successful"))
-    await dialog_manager.done()
-    # TODO: Start the schedule dialog here
-    # await dialog_manager.start(ScheduleDialogSG.main, mode=StartMode.RESET_STACK)
+    # Seamlessly start the scheduling dialog for the new user
+    await dialog_manager.start(ScheduleSG.date_select, mode=StartMode.RESET_STACK)
 
 
 # --- Dialog Windows ---
