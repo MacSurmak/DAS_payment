@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from config_data import config
 from database.base import Base
-from dialogs import registration_dialog, schedule_dialog
+from dialogs import admin_dialog, registration_dialog, schedule_dialog
 from handlers import commands_router
 from keyboards.commands_menu import set_main_menu
 from middlewares import DbSessionMiddleware, GetLangMiddleware
@@ -58,6 +58,7 @@ async def main() -> None:
     dp.include_router(commands_router)
     dp.include_router(registration_dialog)
     dp.include_router(schedule_dialog)
+    dp.include_router(admin_dialog)
 
     # Must be the last one to register handlers
     setup_dialogs(dp)

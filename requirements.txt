@@ -1,7 +1,10 @@
 aiogram~=3.11.0
 APScheduler~=3.10.4
 pandas~=2.2.2
+openpyxl~=3.1.5
 loguru~=0.7.2
 environs~=11.0.0
-openpyxl~=3.1.5
 redis~=5.0.8
+SQLAlchemy~=2.0.29
+asyncpg~=0.29.0
+aiogram_dialog~=2.1.0
