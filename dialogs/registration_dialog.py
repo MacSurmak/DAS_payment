@@ -2,7 +2,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery, Message
 from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.input import TextInput
-from aiogram_dialog.widgets.kbd import Back, Button, Group, Select, SwitchTo
+from aiogram_dialog.widgets.kbd import Back, Button, Group, Select
 from aiogram_dialog.widgets.text import Format
 from loguru import logger
 from sqlalchemy import select
@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import Faculty, User
 from lexicon import LocalizedTextFormat, lexicon
+
 from .schedule_dialog import ScheduleSG
 
 
@@ -209,11 +210,7 @@ registration_dialog = Dialog(
             Button(
                 LocalizedTextFormat("confirm_button"), id="confirm", on_click=on_confirm
             ),
-            SwitchTo(
-                LocalizedTextFormat("back_button"),
-                id="back_to_start",
-                state=RegistrationSG.get_name,
-            ),
+            Back(LocalizedTextFormat("back_button")),
             width=2,
         ),
         state=RegistrationSG.confirm,

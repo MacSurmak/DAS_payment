@@ -1,12 +1,16 @@
+import datetime
+
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery
-from aiogram_dialog import Dialog, DialogManager, Window
+from aiogram_dialog import Dialog, DialogManager, StartMode, Window
 from aiogram_dialog.widgets.kbd import Button, Cancel, Group, SwitchTo
 from aiogram_dialog.widgets.text import Format
 from loguru import logger
+from magic_filter import F
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from database.models import User
+from dialogs.schedule_dialog import ScheduleSG
 from lexicon import LocalizedTextFormat, lexicon
 from services.schedule_service import cancel_booking, get_user_booking
 
@@ -20,23 +24,29 @@ class BookingManagementSG(StatesGroup):
 
 # --- Getters ---
 async def get_booking_data(dialog_manager: DialogManager, **kwargs):
-    """Prepares data for the booking view window."""
+    """
+    Prepares data for the booking view window.
+    Also determines if cancellation/rescheduling is allowed.
+    """
     session: AsyncSession = dialog_manager.middleware_data["session"]
     user: User = dialog_manager.middleware_data["user"]
     lang: str = dialog_manager.middleware_data.get("lang")
 
     booking = await get_user_booking(session, user)
     if not booking:
-        # This should ideally not be reached if the dialog is started correctly
         return {"has_booking": False}
 
     dt = booking.booking_datetime
+    time_diff = dt.replace(tzinfo=None) - datetime.datetime.now()
+    can_modify = time_diff > datetime.timedelta(hours=3)
+
     return {
         "has_booking": True,
         "date": dt.strftime("%d.%m.%Y"),
         "time": dt.strftime("%H:%M"),
         "weekday": lexicon(lang, f"weekday_{dt.weekday()}"),
         "window": booking.window_number,
+        "can_modify": can_modify,
     }
 
 
@@ -64,14 +74,33 @@ async def on_cancel_booking(
         await dialog_manager.switch_to(BookingManagementSG.view_booking)
 
 
+async def on_reschedule(
+    callback: CallbackQuery, button: Button, dialog_manager: DialogManager
+):
+    """Starts the rescheduling process by launching the booking dialog."""
+    # The actual cancellation of the old slot will happen in the schedule_service
+    # when a new slot is confirmed.
+    await dialog_manager.start(ScheduleSG.date_select, mode=StartMode.RESET_STACK)
+
+
 # --- Dialog Windows ---
 booking_management_dialog = Dialog(
     Window(
         LocalizedTextFormat("my_booking_title"),
-        SwitchTo(
-            LocalizedTextFormat("cancel_booking_button"),
-            id="switch_to_cancel",
-            state=BookingManagementSG.confirm_cancel,
+        Group(
+            SwitchTo(
+                LocalizedTextFormat("cancel_booking_button"),
+                id="switch_to_cancel",
+                state=BookingManagementSG.confirm_cancel,
+                when=F["can_modify"],
+            ),
+            Button(
+                LocalizedTextFormat("reschedule_booking_button"),
+                id="reschedule",
+                on_click=on_reschedule,
+                when=F["can_modify"],
+            ),
+            width=1,
         ),
         Cancel(LocalizedTextFormat("close_button")),
         state=BookingManagementSG.view_booking,

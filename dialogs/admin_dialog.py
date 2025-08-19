@@ -327,8 +327,14 @@ async def on_get_report_click(
     file_path = None
     try:
         file_path = await generate_excel_report(session, lang)
-        await callback.message.answer_document(FSInputFile(file_path))
-        logger.info(f"Admin {callback.from_user.id} generated a report.")
+        if file_path:
+            await callback.message.answer_document(FSInputFile(file_path))
+            logger.info(f"Admin {callback.from_user.id} generated a report.")
+        else:
+            await callback.message.answer(lexicon(lang, "report_no_data"))
+            logger.info(
+                f"Admin {callback.from_user.id} tried to generate a report, but there was no data."
+            )
     except Exception as e:
         logger.exception("Failed to generate report.")
         await callback.message.answer(lexicon(lang, "report_generation_failed"))

@@ -1,6 +1,6 @@
 import datetime
 import os
-from itertools import groupby
+from collections import defaultdict
 
 import pandas as pd
 from sqlalchemy import select
@@ -11,7 +11,7 @@ from database.models import Booking, User
 from lexicon import lexicon
 
 
-async def generate_excel_report(session: AsyncSession, lang: str) -> str:
+async def generate_excel_report(session: AsyncSession, lang: str) -> str | None:
     """
     Generates an Excel report of all bookings.
 
@@ -20,7 +20,7 @@ async def generate_excel_report(session: AsyncSession, lang: str) -> str:
         lang: The language code for localization.
 
     Returns:
-        The file path to the generated Excel file.
+        The file path to the generated Excel file, or None if no data.
     """
     stmt = (
         select(Booking)
@@ -30,25 +30,34 @@ async def generate_excel_report(session: AsyncSession, lang: str) -> str:
     result = await session.scalars(stmt)
     all_bookings = result.all()
 
+    if not all_bookings:
+        return None
+
     today = datetime.date.today()
     filename = f"booking_report_{today.isoformat()}.xlsx"
 
+    # Group bookings by date using a more robust method
+    bookings_by_date = defaultdict(list)
+    for booking in all_bookings:
+        bookings_by_date[booking.booking_datetime.date()].append(booking)
+
     with pd.ExcelWriter(filename, engine="openpyxl") as writer:
-        # Group bookings by date
-        for date, bookings_on_day in groupby(
-            all_bookings, key=lambda b: b.booking_datetime.date()
-        ):
+        # Sort dates to ensure sheets are in chronological order
+        for date in sorted(bookings_by_date.keys()):
+            bookings_on_day = bookings_by_date[date]
             sheet_name = date.strftime("%d-%m-%Y")
 
             # Sort bookings within the day by time and window
             sorted_bookings = sorted(
-                list(bookings_on_day),
+                bookings_on_day,
                 key=lambda b: (b.booking_datetime.time(), b.window_number),
             )
 
             report_data = []
             for booking in sorted_bookings:
                 user = booking.user
+                if not user:  # Skip if the user was deleted
+                    continue
                 dt = booking.booking_datetime
                 # Times for the report based on a 5-minute slot
                 time1 = dt.strftime("%H:%M")
@@ -57,9 +66,7 @@ async def generate_excel_report(session: AsyncSession, lang: str) -> str:
 
                 report_data.append(
                     {
-                        lexicon(lang, "report_header_window"): lexicon(
-                            lang, "window_prefix_num", window=booking.window_number
-                        ),
+                        lexicon(lang, "report_header_window"): booking.window_number,
                         lexicon(lang, "report_header_room141"): time1,
                         lexicon(lang, "report_header_cashbox"): time2,
                         lexicon(lang, "report_header_room137"): time3,

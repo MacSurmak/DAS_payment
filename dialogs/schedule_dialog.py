@@ -143,13 +143,37 @@ async def on_booking_confirm(
     dt_iso = dialog_manager.dialog_data.get("selected_datetime")
     booking_dt = datetime.datetime.fromisoformat(dt_iso)
 
-    booking, error = await create_booking(session, user, booking_dt)
+    booking, error, is_reschedule = await create_booking(session, user, booking_dt)
 
     if booking:
-        logger.info(
-            f"User {user.telegram_id} successfully booked slot for {booking_dt}"
-        )
-        await callback.message.edit_text(lexicon(lang, "booking_successful"))
+        if is_reschedule:
+            logger.info(
+                f"User {user.telegram_id} successfully rescheduled to {booking_dt}"
+            )
+            await callback.message.edit_text(
+                lexicon(
+                    lang,
+                    "reschedule_successful",
+                    date=booking_dt.strftime("%d.%m.%Y"),
+                    time=booking_dt.strftime("%H:%M"),
+                    weekday=lexicon(lang, f"weekday_{booking_dt.weekday()}"),
+                    window=booking.window_number,
+                )
+            )
+        else:
+            logger.info(
+                f"User {user.telegram_id} successfully booked slot for {booking_dt}"
+            )
+            await callback.message.edit_text(
+                lexicon(
+                    lang,
+                    "booking_successful",
+                    date=booking_dt.strftime("%d.%m.%Y"),
+                    time=booking_dt.strftime("%H:%M"),
+                    weekday=lexicon(lang, f"weekday_{booking_dt.weekday()}"),
+                    window=booking.window_number,
+                )
+            )
         await dialog_manager.done()
     else:
         logger.warning(

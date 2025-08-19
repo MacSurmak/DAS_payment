@@ -151,10 +151,38 @@ async def get_available_slots(
 
 async def create_booking(
     session: AsyncSession, user: User, booking_datetime: datetime.datetime
-) -> Tuple[Booking | None, str | None]:
-    """Creates a booking for a user, returns booking object or error."""
+) -> Tuple[Booking | None, str | None, bool]:
+    """
+    Creates or updates a booking for a user.
+
+    If the user is already signed up, it treats the action as rescheduling:
+    the old booking is deleted before the new one is created.
+
+    Args:
+        session: The database session.
+        user: The User object.
+        booking_datetime: The new datetime for the booking.
+
+    Returns:
+        A tuple containing:
+        - The new Booking object or None on failure.
+        - An error code string or None on success.
+        - A boolean indicating if it was a reschedule (True) or a new booking (False).
+    """
+    is_reschedule = False
     if user.is_signed_up:
-        return None, "already_booked"
+        is_reschedule = True
+        old_booking = await get_user_booking(session, user)
+        if old_booking:
+            logger.info(
+                f"User {user.telegram_id} is rescheduling. Deleting old booking {old_booking.booking_id}."
+            )
+            await session.delete(old_booking)
+            await session.flush()  # Ensure deletion is processed before insertion
+        else:
+            logger.warning(
+                f"User {user.telegram_id} has is_signed_up=True but no booking found. Proceeding to create a new one."
+            )
 
     # Check for race condition: re-verify the slot is free
     stmt = select(Booking).where(
@@ -162,7 +190,7 @@ async def create_booking(
         Booking.window_number == user.faculty.window_number,
     )
     if await session.scalar(stmt):
-        return None, "too_late"  # Slot was just taken
+        return None, "too_late", is_reschedule
 
     new_booking = Booking(
         user_id=user.user_id,
@@ -172,7 +200,7 @@ async def create_booking(
     user.is_signed_up = True
     session.add(new_booking)
     await session.commit()
-    return new_booking, None
+    return new_booking, None, is_reschedule
 
 
 async def cancel_booking(session: AsyncSession, user: User) -> Tuple[bool, str | None]:
