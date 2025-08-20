@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: das-payment-bot
-          image: your_dockerhub_username/das-payment-bot:latest # IMPORTANT: Replace with your Docker Hub username and image name
+          image: macsurmak/das-payment-bot:latest # IMPORTANT: Replace with your Docker Hub username and image name
           imagePullPolicy: Always
           ports:
             - containerPort: 8080 # The port our web server listens on
