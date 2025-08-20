@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: das-scheduler-deployment
+  namespace: default
+spec:
+  replicas: 1 # IMPORTANT: Always run only ONE instance of the scheduler
+  selector:
+    matchLabels:
+      app: das-scheduler
+  template:
+    metadata:
+      labels:
+        app: das-scheduler
+    spec:
+      containers:
+        - name: das-scheduler
+          image: your_dockerhub_username/das-payment-bot:latest # Use the same image as the bot
+          imagePullPolicy: Always
+          command: ["python3", "scheduler.py"] # Override the default command
+          envFrom:
+            - secretRef:
+                name: das-bot-secrets

@@ -9,7 +9,6 @@ from aiogram.utils.callback_answer import CallbackAnswerMiddleware
 from aiogram.webhook.aiohttp_server import SimpleRequestHandler
 from aiogram_dialog import setup_dialogs
 from aiohttp import web
-from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from loguru import logger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
@@ -32,7 +31,6 @@ from services import (
     populate_initial_faculties,
     populate_initial_lastday,
     populate_initial_timetable,
-    send_notifications,
     setup_logger,
 )
 
@@ -119,17 +117,6 @@ async def main() -> None:
     dp.include_router(messages_router)  # Must be last for other messages
 
     setup_dialogs(dp)
-
-    # --- Scheduler Setup ---
-    scheduler = AsyncIOScheduler(timezone=ZoneInfo("Europe/Moscow"))
-    scheduler.add_job(
-        send_notifications,
-        "cron",
-        hour="8-18",
-        minute="*/5",
-        args=[bot, session_maker],
-    )
-    scheduler.start()
 
     # --- Bot Startup ---
     await on_startup(bot, session_maker)
