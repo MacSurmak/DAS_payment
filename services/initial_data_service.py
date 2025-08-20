@@ -12,9 +12,9 @@ FACULTIES_DATA = [
     {"name": "Психологический", "window_number": 1},
     {"name": "Исторический", "window_number": 1},
     {"name": "Философский", "window_number": 1},
-    {"name": "ФФМ", "window_number": 1},
+    {"name": "ФФМ", "window_number": 2},
     {"name": "Географический", "window_number": 2},
-    {"name": "Почвоведения", "window_number": 2},
+    {"name": "Почвоведения", "window_number": 3},
     {"name": "Экономический", "window_number": 2},
     {"name": "ФББ", "window_number": 2},
     {"name": "ИСАА", "window_number": 2},
@@ -22,7 +22,7 @@ FACULTIES_DATA = [
     {"name": "Политологии", "window_number": 3},
     {"name": "ФФФХИ", "window_number": 3},
     {"name": "ВШКПиУ", "window_number": 3},
-    {"name": "ВШССН", "window_number": 3},
+    # {"name": "ВШССН", "window_number": 3},
     {"name": "Другой", "window_number": 2},  # Added "Other" faculty
 ]
 
