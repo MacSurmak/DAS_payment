@@ -4,7 +4,7 @@ metadata:
   name: das-payment-bot-deployment
   namespace: default
 spec:
-  replicas: 2 # Start with two instances for high availability
+  replicas: 3 # Start with two instances for high availability
   selector:
     matchLabels:
       app: das-payment-bot
