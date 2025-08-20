@@ -2,10 +2,8 @@
 
 # DAS Payment Bot
 
-[![Build and Push Docker Image](https://github.com/macsurmak/das-payment-bot/actions/workflows/deploy.yml/badge.svg)](https://github.com/macsurmak/das-payment-bot/actions/workflows/deploy.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ![Python Version](https://img.shields.io/badge/python-3.13-blue)
-![Powered by Aiogram](https://img.shields.io/badge/powered%20by-aiogram-blue.svg)
 
 Телеграм-бот для электронной очереди в ДАС МГУ, разработанный с упором на чистую архитектуру, масштабируемость и простоту поддержки.
 
