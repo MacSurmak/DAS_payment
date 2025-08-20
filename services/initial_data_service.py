@@ -32,7 +32,7 @@ WORKDAY_SCHEDULE = [
     {"start": "09:20", "end": "10:50"},
     {"start": "11:05", "end": "12:35"},
     {"start": "14:10", "end": "16:35"},
-    {"start": "16:50", "end": "17:20"},
+    {"start": "17:00", "end": "17:25"},
 ]
 
 # Tue, Thu schedule (day_of_week 1, 3)
