@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: das-payment-bot-deployment
+  namespace: default
+spec:
+  replicas: 2 # Start with two instances for high availability
+  selector:
+    matchLabels:
+      app: das-payment-bot
+  template:
+    metadata:
+      labels:
+        app: das-payment-bot
+    spec:
+      containers:
+        - name: das-payment-bot
+          image: your_dockerhub_username/das-payment-bot:latest # IMPORTANT: Replace with your Docker Hub username and image name
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080 # The port our web server listens on
+          envFrom:
+            - secretRef:
+                name: das-bot-secrets
+          # --- Liveness and Readiness Probes for Kubernetes ---
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3

@@ -17,15 +17,18 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
     Checks for bookings one day and one hour in advance.
     """
     moscow_tz = ZoneInfo("Europe/Moscow")
-    now = datetime.datetime.now(moscow_tz)
-    logger.debug(f"Running notification job at {now.isoformat()}")
+    now_moscow = datetime.datetime.now(moscow_tz)
+    logger.debug(f"Running notification job at {now_moscow.isoformat()}")
+
+    # Convert current time to UTC to query the database correctly
+    now_utc = now_moscow.astimezone(ZoneInfo("UTC"))
 
     # Define time windows in UTC for correct DB querying
-    day_ahead_utc = (now + datetime.timedelta(days=1)).astimezone(ZoneInfo("UTC"))
-    hour_ahead_utc = (now + datetime.timedelta(hours=1)).astimezone(ZoneInfo("UTC"))
+    day_ahead_utc = now_utc + datetime.timedelta(days=1)
+    hour_ahead_utc = now_utc + datetime.timedelta(hours=1)
 
     async with session_maker() as session:
-        # Find bookings for one day ahead (at the same time)
+        # Find bookings for one day ahead
         stmt_day = (
             select(Booking)
             .where(
@@ -42,7 +45,7 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
 
         for booking in bookings_day_ahead:
             user = booking.user
-            # booking.booking_datetime is now already in Moscow time
+            # booking.booking_datetime is now already in Moscow time due to AwareDateTime type
             try:
                 await bot.send_message(
                     chat_id=user.telegram_id,
@@ -59,7 +62,7 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
                     f"Failed to send 1-day reminder to {user.telegram_id}: {e}"
                 )
 
-        # Find bookings for one hour ahead (at the same time)
+        # Find bookings for one hour ahead
         stmt_hour = (
             select(Booking)
             .where(
