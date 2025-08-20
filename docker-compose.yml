@@ -1,57 +1,55 @@
-networks:
-  default:
-    driver: bridge
-
+version: '3.8'
 
 services:
-
   redis:
-    container_name: redis
-    image: redis:latest
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-      - REDIS_USER=${REDIS_USER}
-      - REDIS_USER_PASSWORD=${REDIS_USER_PASSWORD}
+    image: redis:7.2-alpine
+    container_name: das-redis
     restart: always
-    deploy:
-      resources:
-        limits:
-          cpus: '0.25'
-          memory: 128M
-        reservations:
-          cpus: '0.25'
-          memory:
-            128M
-    networks:
-      - default
     ports:
       - "6379:6379"
     volumes:
-      - ./redisdata:/data
-    command: >
-      sh -c '
-        mkdir -p /usr/local/etc/redis &&
-        echo "bind 0.0.0.0" > /usr/local/etc/redis/redis.conf &&
-        echo "requirepass $REDIS_PASSWORD" >> /usr/local/etc/redis/redis.conf &&
-        echo "appendonly yes" >> /usr/local/etc/redis/redis.conf &&
-        echo "appendfsync everysec" >> /usr/local/etc/redis/redis.conf &&
-        echo "user default on nopass ~* +@all" > /usr/local/etc/redis/users.acl &&
-        echo "user $REDIS_USER on >$REDIS_USER_PASSWORD ~* +@all" >> /usr/local/etc/redis/users.acl &&
-        redis-server /usr/local/etc/redis/redis.conf --aclfile /usr/local/etc/redis/users.acl
-      '
-      healthcheck:
-      test: ["CMD", "redis-cli", "-a", "$REDIS_PASSWORD", "ping"]
-      interval: 30s
-      timeout: 10s
-      retries: 5
-      restart: unless-stopped
-      tty: true
-      stdin_open: true
+      - redis_data:/data
+    networks:
+      - das-network
+
+  postgres:
+    image: postgres:15
+    container_name: das-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DATABASE}
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - das-network
 
   bot:
-    build: ./
+    build: .
+    container_name: das-bot
+    restart: always
+    env_file:
+      - .env
+    environment:
+      # Override DB and Redis hosts to use service names from docker-compose
+      DB_HOST: postgres
+      REDIS_HOST: redis
     depends_on:
       - redis
-    volumes:
-      - ./database:/database
-    restart: always
+      - postgres
+    ports:
+      # Expose the web server port for webhook testing
+      - "8080:8080"
+    networks:
+      - das-network
+
+volumes:
+  redis_data:
+  postgres_data:
+
+networks:
+  das-network:
+    driver: bridge

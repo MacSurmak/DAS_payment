@@ -1,4 +1,5 @@
 import datetime
+from zoneinfo import ZoneInfo
 
 from aiogram import Bot
 from loguru import logger
@@ -6,7 +7,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from sqlalchemy.orm import selectinload
 
-from database.models import Booking, User
+from database.models import Booking
 from lexicon import lexicon
 
 
@@ -15,20 +16,23 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
     Sends booking reminders to users.
     Checks for bookings one day and one hour in advance.
     """
-    now = datetime.datetime.now()
+    moscow_tz = ZoneInfo("Europe/Moscow")
+    now = datetime.datetime.now(moscow_tz)
     logger.debug(f"Running notification job at {now.isoformat()}")
 
-    day_ahead = now + datetime.timedelta(days=1)
-    hour_ahead = now + datetime.timedelta(hours=1)
+    # Define time windows in UTC for correct DB querying
+    day_ahead_utc = (now + datetime.timedelta(days=1)).astimezone(ZoneInfo("UTC"))
+    hour_ahead_utc = (now + datetime.timedelta(hours=1)).astimezone(ZoneInfo("UTC"))
 
     async with session_maker() as session:
         # Find bookings for one day ahead (at the same time)
         stmt_day = (
             select(Booking)
             .where(
-                Booking.booking_datetime >= day_ahead.replace(second=0, microsecond=0),
                 Booking.booking_datetime
-                < (day_ahead + datetime.timedelta(minutes=5)).replace(
+                >= day_ahead_utc.replace(second=0, microsecond=0),
+                Booking.booking_datetime
+                < (day_ahead_utc + datetime.timedelta(minutes=5)).replace(
                     second=0, microsecond=0
                 ),
             )
@@ -38,6 +42,7 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
 
         for booking in bookings_day_ahead:
             user = booking.user
+            # booking.booking_datetime is now already in Moscow time
             try:
                 await bot.send_message(
                     chat_id=user.telegram_id,
@@ -58,9 +63,10 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
         stmt_hour = (
             select(Booking)
             .where(
-                Booking.booking_datetime >= hour_ahead.replace(second=0, microsecond=0),
                 Booking.booking_datetime
-                < (hour_ahead + datetime.timedelta(minutes=5)).replace(
+                >= hour_ahead_utc.replace(second=0, microsecond=0),
+                Booking.booking_datetime
+                < (hour_ahead_utc + datetime.timedelta(minutes=5)).replace(
                     second=0, microsecond=0
                 ),
             )
@@ -70,6 +76,7 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
 
         for booking in bookings_hour_ahead:
             user = booking.user
+            # booking.booking_datetime is now already in Moscow time
             try:
                 await bot.send_message(
                     chat_id=user.telegram_id,

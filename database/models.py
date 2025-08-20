@@ -19,6 +19,7 @@ from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 
 from .base import Base
+from .types import AwareDateTime
 
 
 class User(Base):
@@ -98,7 +99,7 @@ class Booking(Base):
     user_id = Column(
         Integer, ForeignKey("users.user_id", ondelete="CASCADE"), unique=True
     )
-    booking_datetime = Column(DateTime(timezone=True), nullable=False)
+    booking_datetime = Column(AwareDateTime, nullable=False)
     window_number = Column(Integer, nullable=False)
 
     user = relationship("User", back_populates="booking")

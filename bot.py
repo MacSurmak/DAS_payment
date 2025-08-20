@@ -6,8 +6,11 @@ from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.fsm.storage.redis import DefaultKeyBuilder, RedisStorage
 from aiogram.utils.callback_answer import CallbackAnswerMiddleware
+from aiogram.webhook.aiohttp_server import SimpleRequestHandler
 from aiogram_dialog import setup_dialogs
+from aiohttp import web
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from loguru import logger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
 from config_data import config
@@ -34,6 +37,48 @@ from services import (
 )
 
 
+async def on_startup(bot: Bot, session_maker: async_sessionmaker) -> None:
+    """A function that is executed when the bot starts."""
+    # --- Create tables and populate initial data ---
+    engine = session_maker.kw["bind"]
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    await populate_initial_faculties(session_maker)
+    await populate_initial_timetable(session_maker)
+    await populate_initial_lastday(session_maker)
+
+    # --- Set webhook if URL is provided ---
+    if config.webhook.base_url:
+        webhook_url = f"{config.webhook.base_url}{config.webhook.path}"
+        await bot.set_webhook(url=webhook_url)
+        logger.info(f"Webhook set to {webhook_url}")
+    else:
+        logger.info("Webhook not set, running in polling mode.")
+
+    # --- Set main menu commands ---
+    await set_main_menu(bot)
+
+
+async def on_shutdown(bot: Bot) -> None:
+    """A function that is executed when the bot is shut down."""
+    logger.info("Bot is shutting down...")
+    await bot.delete_webhook(drop_pending_updates=True)
+    logger.info("Webhook deleted.")
+
+
+# --- Health check handlers for Kubernetes ---
+async def liveness_probe(request):
+    """Liveness probe endpoint."""
+    return web.Response(text="OK", status=200)
+
+
+async def readiness_probe(request):
+    """Readiness probe endpoint."""
+    # In a real application, this could check DB/Redis connections.
+    return web.Response(text="OK", status=200)
+
+
 async def main() -> None:
     """Initializes and starts the bot."""
     setup_logger("INFO")
@@ -52,16 +97,12 @@ async def main() -> None:
     dp = Dispatcher(storage=bot_storage)
 
     # --- Database Initialization ---
-    engine = create_async_engine(url=config.db.url, echo=False)
+    engine = create_async_engine(
+        url=config.db.url,
+        echo=False,
+        pool_pre_ping=True,  # Check connection before use
+    )
     session_maker = async_sessionmaker(engine, expire_on_commit=False)
-
-    # --- Create tables and populate initial data ---
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    await populate_initial_faculties(session_maker)
-    await populate_initial_timetable(session_maker)
-    await populate_initial_lastday(session_maker)
 
     # --- Middlewares Setup ---
     dp.update.middleware(DbSessionMiddleware(session_pool=session_maker))
@@ -91,10 +132,39 @@ async def main() -> None:
     scheduler.start()
 
     # --- Bot Startup ---
-    await set_main_menu(bot)
-    await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+    await on_startup(bot, session_maker)
+    dp.shutdown.register(on_shutdown)
+
+    if config.webhook.base_url:
+        # --- Webhook Mode ---
+        logger.info("Starting bot in webhook mode...")
+        app = web.Application()
+        app.router.add_get("/health/live", liveness_probe)
+        app.router.add_get("/health/ready", readiness_probe)
+
+        webhook_requests_handler = SimpleRequestHandler(
+            dispatcher=dp,
+            bot=bot,
+        )
+        webhook_requests_handler.register(app, path=config.webhook.path)
+
+        runner = web.AppRunner(app)
+        await runner.setup()
+        site = web.TCPSite(runner, host=config.webhook.host, port=config.webhook.port)
+        await site.start()
+
+        # Keep the server running
+        await asyncio.Event().wait()
+
+    else:
+        # --- Polling Mode ---
+        logger.info("Starting bot in polling mode...")
+        await bot.delete_webhook(drop_pending_updates=True)
+        await dp.start_polling(bot)
 
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    try:
+        asyncio.run(main())
+    except (KeyboardInterrupt, SystemExit):
+        logger.info("Bot stopped manually.")

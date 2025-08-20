@@ -1,4 +1,5 @@
 import datetime
+from zoneinfo import ZoneInfo
 
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import CallbackQuery
@@ -31,20 +32,24 @@ async def get_booking_data(dialog_manager: DialogManager, **kwargs):
     session: AsyncSession = dialog_manager.middleware_data["session"]
     user: User = dialog_manager.middleware_data["user"]
     lang: str = dialog_manager.middleware_data.get("lang")
+    moscow_tz = ZoneInfo("Europe/Moscow")
 
     booking = await get_user_booking(session, user)
     if not booking:
         return {"has_booking": False}
 
-    dt = booking.booking_datetime
-    time_diff = dt.replace(tzinfo=None) - datetime.datetime.now()
+    # The datetime from DB is now automatically in Moscow time thanks to AwareDateTime type
+    dt_moscow = booking.booking_datetime
+    now_moscow = datetime.datetime.now(moscow_tz)
+
+    time_diff = dt_moscow - now_moscow
     can_modify = time_diff > datetime.timedelta(hours=3)
 
     return {
         "has_booking": True,
-        "date": dt.strftime("%d.%m.%Y"),
-        "time": dt.strftime("%H:%M"),
-        "weekday": lexicon(lang, f"weekday_{dt.weekday()}"),
+        "date": dt_moscow.strftime("%d.%m.%Y"),
+        "time": dt_moscow.strftime("%H:%M"),
+        "weekday": lexicon(lang, f"weekday_{dt_moscow.weekday()}"),
         "window": booking.window_number,
         "can_modify": can_modify,
     }

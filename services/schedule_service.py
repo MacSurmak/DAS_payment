@@ -1,10 +1,10 @@
 import datetime
 from typing import Dict, List, Tuple
+from zoneinfo import ZoneInfo
 
 from loguru import logger
-from sqlalchemy import and_, desc, func, or_, select
+from sqlalchemy import desc, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from database.models import Booking, LastDay, ScheduleException, TimetableSlot, User
 
@@ -22,18 +22,23 @@ def _generate_staggered_slots(
 ) -> List[datetime.datetime]:
     """Helper to generate staggered 5-minute slots based on a set of time blocks."""
     generated_slots = []
-    now = datetime.datetime.now()
+    moscow_tz = ZoneInfo("Europe/Moscow")
+    now_moscow = datetime.datetime.now(moscow_tz)
 
     sorted_blocks = sorted(time_blocks, key=lambda b: b["start"])
 
     for block in sorted_blocks:
-        current_time = datetime.datetime.combine(target_date, block["start"])
-        end_time = datetime.datetime.combine(target_date, block["end"])
+        current_time = datetime.datetime.combine(
+            target_date, block["start"], tzinfo=moscow_tz
+        )
+        end_time = datetime.datetime.combine(
+            target_date, block["end"], tzinfo=moscow_tz
+        )
 
         counter = 0
         while current_time < end_time:
             current_window_turn = ((start_window - 1 + counter) % 3) + 1
-            if current_window_turn == user_window and current_time > now:
+            if current_window_turn == user_window and current_time > now_moscow:
                 generated_slots.append(current_time)
             current_time += datetime.timedelta(minutes=5)
             counter += 1
@@ -45,11 +50,6 @@ async def get_available_slots(
 ) -> List[datetime.datetime]:
     """
     Generates available slots using a unified exception-based system.
-    1. Fetches all active exceptions for the target date.
-    2. Performs a preliminary check for 'exclusive' rules that block the user.
-    3. Checks for a high-priority 'non-working' rule.
-    4. If not blocked, gets the base schedule and applies modifications.
-    5. Generates and filters slots based on the final, calculated schedule.
     """
     # --- Validation Layer ---
     last_day_record = await session.get(LastDay, 1)
@@ -82,9 +82,9 @@ async def get_available_slots(
                 logger.debug(
                     f"User {user.telegram_id} blocked by exclusive year rule ID {exc.exception_id}"
                 )
-                return []  # User's year is not in the allowed list, block immediately.
+                return []
 
-    # 3. Check for a 'non-working' rule. The highest priority one will be first.
+    # 3. Check for a 'non-working' rule.
     if any(e.is_non_working for e in exceptions):
         logger.debug(f"Date {target_date} is a non-working day due to an exception.")
         return []
@@ -102,27 +102,17 @@ async def get_available_slots(
     ]
     start_window = 1
 
-    # Apply 'modification' exceptions that are relevant for this specific user.
+    # Apply 'modification' exceptions relevant for this user.
     for exc in exceptions:
-        # Rule is for specific years, and this user is not one of them.
-        # Since we passed the 'block_others' check, this just means we skip modification.
         if exc.allowed_years and user.year not in exc.allowed_years:
             continue
-
-        # Rule is for specific days, and this is not one of them.
         if exc.target_days_of_week and day_of_week not in exc.target_days_of_week:
             continue
-
-        # Apply start window override from the highest priority applicable rule
         if exc.start_window_override is not None:
             start_window = exc.start_window_override
-            logger.debug(f"Overriding start window to {start_window} for {target_date}")
-
-        # Modify a specific time block
         if exc.target_start_time and exc.new_start_time and exc.new_end_time:
             for block in time_blocks:
                 if block["start"] == exc.target_start_time:
-                    logger.debug(f"Modifying slot {block['start']} on {target_date}")
                     block["start"] = exc.new_start_time
                     block["end"] = exc.new_end_time
                     break
@@ -141,12 +131,11 @@ async def get_available_slots(
     stmt_bookings = select(Booking.booking_datetime).where(
         func.date(Booking.booking_datetime) == target_date,
     )
-    booked_times = {
-        b.replace(tzinfo=None) for b in (await session.scalars(stmt_bookings)).all()
-    }
+    booked_times = set((await session.scalars(stmt_bookings)).all())
     available_slots = [slot for slot in potential_slots if slot not in booked_times]
 
-    return sorted(available_slots)
+    # Return naive datetime objects to the dialog for simplicity
+    return sorted([slot.replace(tzinfo=None) for slot in available_slots])
 
 
 async def create_booking(
@@ -154,22 +143,10 @@ async def create_booking(
 ) -> Tuple[Booking | None, str | None, bool]:
     """
     Creates or updates a booking for a user.
-
-    If the user is already signed up, it treats the action as rescheduling:
-    the old booking is deleted before the new one is created.
-
-    Args:
-        session: The database session.
-        user: The User object.
-        booking_datetime: The new datetime for the booking.
-
-    Returns:
-        A tuple containing:
-        - The new Booking object or None on failure.
-        - An error code string or None on success.
-        - A boolean indicating if it was a reschedule (True) or a new booking (False).
+    `booking_datetime` is expected to be a naive datetime from the dialog.
     """
     is_reschedule = False
+    # The AwareDateTime type will handle conversion to UTC before saving
     if user.is_signed_up:
         is_reschedule = True
         old_booking = await get_user_booking(session, user)
@@ -178,13 +155,13 @@ async def create_booking(
                 f"User {user.telegram_id} is rescheduling. Deleting old booking {old_booking.booking_id}."
             )
             await session.delete(old_booking)
-            await session.flush()  # Ensure deletion is processed before insertion
+            await session.flush()
         else:
             logger.warning(
-                f"User {user.telegram_id} has is_signed_up=True but no booking found. Proceeding to create a new one."
+                f"User {user.telegram_id} has is_signed_up=True but no booking found."
             )
 
-    # Check for race condition: re-verify the slot is free
+    # Re-verify the slot is free. AwareDateTime type handles timezone on booking_datetime.
     stmt = select(Booking).where(
         Booking.booking_datetime == booking_datetime,
         Booking.window_number == user.faculty.window_number,
@@ -209,8 +186,10 @@ async def cancel_booking(session: AsyncSession, user: User) -> Tuple[bool, str |
     if not booking:
         return False, "no_booking"
 
-    # Check 3-hour rule
-    time_diff = booking.booking_datetime.replace(tzinfo=None) - datetime.datetime.now()
+    # Check 3-hour rule. booking.booking_datetime is already in Moscow Time.
+    time_diff = booking.booking_datetime - datetime.datetime.now(
+        ZoneInfo("Europe/Moscow")
+    )
     if time_diff < datetime.timedelta(hours=3):
         return False, "too_late"
 

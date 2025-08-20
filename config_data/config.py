@@ -21,6 +21,16 @@ class TgBot:
 
 
 @dataclass
+class WebhookConfig:
+    """Webhook configuration."""
+
+    base_url: str | None
+    path: str
+    host: str
+    port: int
+
+
+@dataclass
 class RedisConfig:
     """Redis connection configuration."""
 
@@ -39,6 +49,7 @@ class Config:
     bot: TgBot
     db: DatabaseConfig
     redis: RedisConfig
+    webhook: WebhookConfig
 
 
 def load_config(path: str | None = ".env") -> Config:
@@ -77,5 +88,11 @@ def load_config(path: str | None = ".env") -> Config:
             password=env("REDIS_PASSWORD"),
             bot_database=env.int("REDIS_BOT_DATABASE"),
             middleware_database=env.int("REDIS_MIDDLEWARE_DATABASE"),
+        ),
+        webhook=WebhookConfig(
+            base_url=env("BASE_WEBHOOK_URL", None),
+            path=env("WEBHOOK_PATH", "/webhook"),
+            host=env("WEB_SERVER_HOST", "0.0.0.0"),
+            port=env.int("WEB_SERVER_PORT", 8080),
         ),
     )
