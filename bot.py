@@ -36,6 +36,7 @@ from services import (
 
 __version__ = "2.0.0"
 
+
 async def on_startup(bot: Bot, session_maker: async_sessionmaker) -> None:
     """A function that is executed when the bot starts."""
     # --- Create tables and populate initial data ---
