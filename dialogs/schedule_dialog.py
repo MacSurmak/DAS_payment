@@ -8,6 +8,7 @@ from aiogram_dialog import Dialog, DialogManager, Window
 from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
 from aiogram_dialog.widgets.kbd.calendar_kbd import CalendarConfig
 from aiogram_dialog.widgets.text import Const, Format
+from aiogram.types import FSInputFile
 from loguru import logger
 from magic_filter import F
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -146,34 +147,33 @@ async def on_booking_confirm(
     booking, error, is_reschedule = await create_booking(session, user, booking_dt)
 
     if booking:
-        if is_reschedule:
-            logger.info(
-                f"User {user.telegram_id} successfully rescheduled to {booking_dt}"
-            )
-            await callback.message.edit_text(
-                lexicon(
-                    lang,
-                    "reschedule_successful",
-                    date=booking_dt.strftime("%d.%m.%Y"),
-                    time=booking_dt.strftime("%H:%M"),
-                    weekday=lexicon(lang, f"weekday_{booking_dt.weekday()}"),
-                    window=booking.window_number,
-                )
-            )
-        else:
-            logger.info(
-                f"User {user.telegram_id} successfully booked slot for {booking_dt}"
-            )
-            await callback.message.edit_text(
-                lexicon(
-                    lang,
-                    "booking_successful",
-                    date=booking_dt.strftime("%d.%m.%Y"),
-                    time=booking_dt.strftime("%H:%M"),
-                    weekday=lexicon(lang, f"weekday_{booking_dt.weekday()}"),
-                    window=booking.window_number,
-                )
-            )
+        # First, delete the message with the "Confirm" button
+        await callback.message.delete()
+
+        message_key = "reschedule_successful" if is_reschedule else "booking_successful"
+        log_message = (
+            f"rescheduled to {booking_dt}"
+            if is_reschedule
+            else f"booked slot for {booking_dt}"
+        )
+
+        logger.info(f"User {user.telegram_id} successfully {log_message}")
+
+        # Prepare the caption text
+        caption_text = lexicon(
+            lang,
+            message_key,
+            date=booking_dt.strftime("%d.%m.%Y"),
+            time=booking_dt.strftime("%H:%M"),
+            weekday=lexicon(lang, f"weekday_{booking_dt.weekday()}"),
+            window=booking.window_number,
+        )
+
+        # Send a new message with a photo and caption
+        await callback.message.answer_photo(
+            photo=FSInputFile("assets/map.jpg"), caption=caption_text
+        )
+
         await dialog_manager.done()
     else:
         logger.warning(

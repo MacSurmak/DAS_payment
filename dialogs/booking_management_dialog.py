@@ -43,7 +43,10 @@ async def get_booking_data(dialog_manager: DialogManager, **kwargs):
     now_moscow = datetime.datetime.now(moscow_tz)
 
     time_diff = dt_moscow - now_moscow
-    can_modify = time_diff > datetime.timedelta(hours=3)
+    # Allow modification if >3 hours in the future OR if the time has already passed
+    can_modify = (time_diff > datetime.timedelta(hours=3)) or (
+        time_diff <= datetime.timedelta(0)
+    )
 
     return {
         "has_booking": True,
