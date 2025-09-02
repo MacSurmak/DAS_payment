@@ -190,7 +190,7 @@ async def cancel_booking(session: AsyncSession, user: User) -> Tuple[bool, str |
     time_diff = booking.booking_datetime - datetime.datetime.now(
         ZoneInfo("Europe/Moscow")
     )
-    if time_diff < datetime.timedelta(hours=3):
+    if datetime.timedelta(0) < time_diff < datetime.timedelta(hours=3):
         return False, "too_late"
 
     user.is_signed_up = False
