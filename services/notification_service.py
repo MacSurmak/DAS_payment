@@ -2,6 +2,7 @@ import datetime
 from zoneinfo import ZoneInfo
 
 from aiogram import Bot
+from aiogram.types import FSInputFile
 from loguru import logger
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
@@ -27,6 +28,8 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
     day_ahead_utc = now_utc + datetime.timedelta(days=1)
     hour_ahead_utc = now_utc + datetime.timedelta(hours=1)
 
+    notification_photo = FSInputFile("assets/map.jpg")
+
     async with session_maker() as session:
         # Find bookings for one day ahead
         stmt_day = (
@@ -47,14 +50,16 @@ async def send_notifications(bot: Bot, session_maker: async_sessionmaker[AsyncSe
             user = booking.user
             # booking.booking_datetime is now already in Moscow time due to AwareDateTime type
             try:
-                await bot.send_message(
+                caption_text = lexicon(
+                    user.lang,
+                    "notification_day_before",
+                    time=booking.booking_datetime.strftime("%H:%M"),
+                    window=booking.window_number,
+                )
+                await bot.send_photo(
                     chat_id=user.telegram_id,
-                    text=lexicon(
-                        user.lang,
-                        "notification_day_before",
-                        time=booking.booking_datetime.strftime("%H:%M"),
-                        window=booking.window_number,
-                    ),
+                    photo=notification_photo,
+                    caption=caption_text,
                 )
                 logger.info(f"Sent 1-day reminder to user {user.telegram_id}")
             except Exception as e:
