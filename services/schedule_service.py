@@ -127,6 +127,7 @@ async def get_available_slots(
 
     stmt_bookings = select(Booking.booking_datetime).where(
         func.date(Booking.booking_datetime) == target_date,
+        Booking.window_number == user.faculty.window_number,
     )
     booked_times = set((await session.scalars(stmt_bookings)).all())
     available_slots = [slot for slot in potential_slots if slot not in booked_times]
