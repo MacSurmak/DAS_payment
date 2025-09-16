@@ -35,13 +35,10 @@ def _generate_staggered_slots(
             target_date, block["end"], tzinfo=moscow_tz
         )
 
-        counter = 0
         while current_time < end_time:
-            current_window_turn = ((start_window - 1 + counter) % 3) + 1
-            if current_window_turn == user_window and current_time > now_moscow:
+            if current_time > now_moscow:
                 generated_slots.append(current_time)
             current_time += datetime.timedelta(minutes=5)
-            counter += 1
     return generated_slots
 
 
