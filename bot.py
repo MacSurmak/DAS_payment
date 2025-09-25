@@ -11,6 +11,7 @@ from aiogram_dialog import setup_dialogs
 from aiohttp import web
 from loguru import logger
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from sqlalchemy import text
 
 from config_data import config
 from database.base import Base
@@ -50,7 +51,7 @@ async def on_startup(bot: Bot, session_maker: async_sessionmaker) -> None:
 
     # --- Set webhook if URL is provided ---
     if config.webhook.base_url:
-        webhook_url = f"{config.webhook.base_url}{config.webhook.path}"
+        webhook_url = f"{config.webhook.bfrom sqlalchemy import textase_url}{config.webhook.path}"
         await bot.set_webhook(url=webhook_url)
         logger.info(f"Webhook set to {webhook_url}")
     else:
@@ -65,18 +66,6 @@ async def on_shutdown(bot: Bot) -> None:
     logger.info("Bot is shutting down...")
     await bot.delete_webhook(drop_pending_updates=True)
     logger.info("Webhook deleted.")
-
-
-# --- Health check handlers for Kubernetes ---
-async def liveness_probe(request):
-    """Liveness probe endpoint."""
-    return web.Response(text="OK", status=200)
-
-
-async def readiness_probe(request):
-    """Readiness probe endpoint."""
-    # In a real application, this could check DB/Redis connections.
-    return web.Response(text="OK", status=200)
 
 
 async def main() -> None:
@@ -129,6 +118,35 @@ async def main() -> None:
     if config.webhook.base_url:
         # --- Webhook Mode ---
         logger.info("Starting bot in webhook mode...")
+
+        # --- Health check handlers for Kubernetes ---
+        async def liveness_probe(request):
+            """Liveness probe endpoint."""
+            return web.Response(text="OK", status=200)
+
+        async def readiness_probe(request):
+            """
+            Readiness probe endpoint that checks connections to all critical services.
+            """
+            try:
+                # 1. Check Telegram API connection
+                await bot.get_me()
+
+                # 2. Check Database connection by executing a simple query
+                async with session_maker() as session:
+                    await session.execute(text("SELECT 1"))
+
+                # 3. Check Redis connection
+                await bot_storage.redis.ping()
+
+                logger.debug("Readiness probe successful.")
+                return web.Response(text="OK", status=200)
+            except Exception as e:
+                logger.error(f"Readiness probe failed: {e.__class__.__name__} - {e}")
+                return web.Response(
+                    text=f"Service Unavailable: {e.__class__.__name__}", status=503
+                )
+
         app = web.Application()
         app.router.add_get("/health/live", liveness_probe)
         app.router.add_get("/health/ready", readiness_probe)
