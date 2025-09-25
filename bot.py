@@ -51,7 +51,7 @@ async def on_startup(bot: Bot, session_maker: async_sessionmaker) -> None:
 
     # --- Set webhook if URL is provided ---
     if config.webhook.base_url:
-        webhook_url = f"{config.webhook.bfrom sqlalchemy import textase_url}{config.webhook.path}"
+        webhook_url = f"{config.webhook.base_url}{config.webhook.path}"
         await bot.set_webhook(url=webhook_url)
         logger.info(f"Webhook set to {webhook_url}")
     else:
