@@ -1,4 +1,5 @@
 import logging
+import sys
 from typing import List, Union
 
 from loguru import logger
@@ -23,10 +24,19 @@ class InterceptHandler(logging.Handler):
         )
 
 
-def setup_logger(level: Union[str, int] = "DEBUG", ignored: List[str] = ""):
-    logging.basicConfig(
-        handlers=[InterceptHandler()], level=logging.getLevelName(level)
-    )
+def setup_logger(level: Union[str, int] = "INFO", ignored: List[str] = ""):
+    # 1. Remove the default loguru handler and add a new one with our level
+    logger.remove()
+    logger.add(sys.stderr, level=level)
+
+    # 2. Configure the standard logging library to be intercepted
+    logging.basicConfig(handlers=[InterceptHandler()], level=0, force=True)
+
+    # 3. Mute noisy loggers from libraries
+    logging.getLogger("aiohttp.access").setLevel(logging.WARNING)
+
+    # 4. Disable loggers if needed
     for ignore in ignored:
         logger.disable(ignore)
+
     logger.info("Logging is successfully configured")

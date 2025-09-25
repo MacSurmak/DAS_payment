@@ -122,7 +122,15 @@ async def main() -> None:
         # --- Health check handlers for Kubernetes ---
         async def liveness_probe(request):
             """Liveness probe endpoint."""
-            return web.Response(text="OK", status=200)
+            try:
+                logger.debug("Liveness probe successful.")
+                return web.Response(text="OK", status=200)
+            except Exception as e:
+                logger.error(f"Liveness probe failed: {e.__class__.__name__} - {e}")
+                return web.Response(
+                    text=f"Service Unavailable: {e.__class__.__name__}", status=503
+                )
+        
 
         async def readiness_probe(request):
             """

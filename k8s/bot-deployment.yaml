@@ -5,6 +5,7 @@ metadata:
   namespace: default
 spec:
   replicas: 3 # Start with two instances for high availability
+  minReadySeconds: 15
   selector:
     matchLabels:
       app: das-payment-bot
