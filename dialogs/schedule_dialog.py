@@ -9,6 +9,7 @@ from aiogram_dialog.widgets.kbd import Button, Calendar, Group, Select, SwitchTo
 from aiogram_dialog.widgets.kbd.calendar_kbd import CalendarConfig
 from aiogram_dialog.widgets.text import Const, Format
 from aiogram.types import FSInputFile
+from aiogram.exceptions import TelegramBadRequest
 from loguru import logger
 from magic_filter import F
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -148,7 +149,19 @@ async def on_booking_confirm(
 
     if booking:
         # First, delete the message with the "Confirm" button
-        await callback.message.delete()
+        try:
+            await callback.message.delete()
+        except TelegramBadRequest:
+            logger.warning(
+                f"Could not delete old message {callback.message.message_id} for user {user.telegram_id}. Editing keyboard instead."
+            )
+            try:
+                await callback.message.edit_reply_markup(reply_markup=None)
+            except TelegramBadRequest:
+                logger.warning(
+                    f"Could not edit reply markup for old message {callback.message.message_id} for user {user.telegram_id}. Passing."
+                )
+                pass
 
         message_key = "reschedule_successful" if is_reschedule else "booking_successful"
         log_message = (
@@ -171,8 +184,9 @@ async def on_booking_confirm(
 
         # Send a new message with a photo and caption
         await callback.message.answer_photo(
-            photo=FSInputFile("assets/map.jpg"), caption=caption_text
+            photo=FSInputFile("assets/map.jpg")
         )
+        await callback.message.answer(text=caption_text)
 
         await dialog_manager.done()
     else:
